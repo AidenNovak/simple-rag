@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.env.local
+data/
+*.log
+screenshots/
+test/
+.DS_Store
+.git
+web/node_modules

@@ -1,0 +1,33 @@
+# 仅含依赖（Postgres+pgvector、Redis）。应用本身用 node 直跑或后续容器化。
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: private-kb-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kb
+      POSTGRES_PASSWORD: kb
+      POSTGRES_DB: private_kb
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - kb_pg:/var/lib/postgresql/data
+    command: >
+      bash -c "
+        docker-entrypoint.sh postgres &
+        until pg_isready -U kb; do sleep 1; done
+        psql -U kb -d private_kb -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+        psql -U kb -d private_kb -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm;'
+        psql -U kb -d private_kb -c 'CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";'
+        wait
+      "
+
+  redis:
+    image: redis:7-alpine
+    container_name: private-kb-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+
+volumes:
+  kb_pg:

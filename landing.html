@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>知识库 — 你的私人 AI 研究助手</title>
+<style>
+/* ===== Apple 风格设计系统 ===== */
+:root {
+  --bg: #fbfbfd;
+  --bg-dark: #1d1d1f;
+  --text: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-light: #86868b;
+  --accent: #5786FE;
+  --accent-dark: #0071e3;
+  --border: #d2d2d7;
+  --radius: 18px;
+  --radius-lg: 24px;
+  --maxw: 980px;
+  --maxw-wide: 1200px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); overflow-x: hidden; }
+a { color: var(--accent-dark); text-decoration: none; }
+a:hover { text-decoration: underline; }
+img { max-width: 100%; display: block; }
+
+/* ===== 导航栏 ===== */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  height: 48px; background: rgba(251,251,253,0.8);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-inner { width: var(--maxw-wide); max-width: 100%; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; }
+.nav-logo { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+.nav-links { display: flex; gap: 32px; }
+.nav-links a { font-size: 13px; color: var(--text-secondary); }
+.nav-cta { font-size: 13px; color: var(--accent-dark); }
+
+/* ===== Hero ===== */
+.hero { text-align: center; padding: 120px 22px 60px; }
+.hero-eyebrow { font-size: 19px; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+.hero h1 {
+  font-size: clamp(40px, 7vw, 80px); font-weight: 700; letter-spacing: -0.03em;
+  line-height: 1.05; margin-bottom: 16px;
+  background: linear-gradient(180deg, #1d1d1f 0%, #434343 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero-sub { font-size: clamp(19px, 2.5vw, 28px); color: var(--text-secondary); font-weight: 400; max-width: 700px; margin: 0 auto 32px; line-height: 1.4; }
+.hero-cta { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.btn-primary {
+  background: var(--accent-dark); color: #fff; padding: 12px 28px;
+  border-radius: 980px; font-size: 16px; font-weight: 400; border: none; cursor: pointer;
+  transition: transform 0.2s;
+}
+.btn-primary:hover { background: #0058b0; }
+.btn-link { color: var(--accent-dark); font-size: 16px; display: flex; align-items: center; gap: 4px; }
+.btn-link::after { content: "›"; font-size: 20px; }
+
+/* ===== Hero 截图 ===== */
+.hero-shot {
+  max-width: var(--maxw-wide); margin: 40px auto 0; padding: 0 22px;
+}
+.hero-shot img { border-radius: var(--radius-lg); box-shadow: 0 30px 80px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.06); }
+
+/* ===== Section 通用 ===== */
+.section { padding: 100px 22px; text-align: center; }
+.section-eyebrow { font-size: 17px; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+.section h2 { font-size: clamp(32px, 5vw, 56px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; }
+.section-sub { font-size: clamp(17px, 2vw, 21px); color: var(--text-secondary); max-width: 680px; margin: 0 auto 48px; line-height: 1.5; }
+
+/* ===== Feature Grid ===== */
+.features { max-width: var(--maxw-wide); margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.feature-card {
+  background: #fff; border-radius: var(--radius-lg); padding: 40px; text-align: left;
+  overflow: hidden; border: 1px solid rgba(0,0,0,0.04);
+}
+.feature-card.full { grid-column: 1 / -1; }
+.feature-card h3 { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 10px; }
+.feature-card p { font-size: 17px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px; }
+.feature-card img { border-radius: var(--radius); box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
+
+/* ===== Dark Section ===== */
+.section-dark { background: var(--bg-dark); color: #f5f5f7; }
+.section-dark h2 { color: #f5f5f7; }
+.section-dark .section-sub { color: #a1a1a6; }
+.section-dark .feature-card { background: #2a2a2c; border-color: rgba(255,255,255,0.08); }
+.section-dark .feature-card h3 { color: #f5f5f7; }
+.section-dark .feature-card p { color: #a1a1a6; }
+
+/* ===== Tech Stack ===== */
+.tech-grid { max-width: var(--maxw); margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.tech-item { text-align: center; }
+.tech-item .tech-icon { font-size: 40px; margin-bottom: 12px; }
+.tech-item h4 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.tech-item p { font-size: 14px; color: var(--text-secondary); }
+
+/* ===== Stats ===== */
+.stats { display: flex; justify-content: center; gap: 64px; padding: 60px 22px; flex-wrap: wrap; }
+.stat { text-align: center; }
+.stat-num { font-size: 48px; font-weight: 700; color: var(--accent); letter-spacing: -0.02em; }
+.stat-label { font-size: 15px; color: var(--text-secondary); }
+
+/* ===== Footer ===== */
+.footer { background: #f5f5f7; padding: 40px 22px; text-align: center; color: var(--text-light); font-size: 13px; }
+.footer-links { display: flex; gap: 24px; justify-content: center; margin-bottom: 16px; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+  .features { grid-template-columns: 1fr; }
+  .tech-grid { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  .stats { gap: 32px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 导航 -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">📚 知识库</div>
+    <div class="nav-links">
+      <a href="#features">功能</a>
+      <a href="#ai">智能问答</a>
+      <a href="#tech">技术</a>
+      <a href="#start">开始使用</a>
+    </div>
+    <a href="#start" class="nav-cta">立即体验 →</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-eyebrow">基于 DeepSeek 的 RAG 知识库</div>
+  <h1>你的私人<br>AI 研究助手</h1>
+  <p class="hero-sub">上传文档，写下笔记，用自然语言提问。<br>答案带引用来源，每一次回答都有据可查。</p>
+  <div class="hero-cta">
+    <a href="#start"><button class="btn-primary">开始使用</button></a>
+    <a href="#features" class="btn-link">了解更多</a>
+  </div>
+</section>
+
+<!-- Hero 截图 -->
+<div class="hero-shot">
+  <img src="screenshots/04-chat-answer.png" alt="知识库问答界面" />
+</div>
+
+<!-- 核心功能 -->
+<section class="section" id="features">
+  <div class="section-eyebrow">核心功能</div>
+  <h2>强大而优雅</h2>
+  <p class="section-sub">从文档上传到智能问答，每一个环节都精心打磨。</p>
+
+  <div class="features">
+    <div class="feature-card">
+      <h3>📄 全格式文档解析</h3>
+      <p>支持 PDF、Word、PPT、Excel、Markdown、HTML、EPUB。扫描件自动走 OCR，提取的文本精准入库。</p>
+      <img src="screenshots/03-documents.png" alt="文档管理" />
+    </div>
+    <div class="feature-card">
+      <h3>✏️ 笔记即时入库</h3>
+      <p>写下笔记，自动摄入知识库。支持 Markdown 编辑，随时修改重新索引。你写下的每一个字都可被检索。</p>
+      <img src="screenshots/02-notes-editing.png" alt="笔记编辑" />
+    </div>
+    <div class="feature-card full">
+      <h3>💬 智能问答，带引用来源</h3>
+      <p>基于 DeepSeek v4-pro 推理模型 + 向量检索 + 关键词混合召回。每个答案都标注来源文档，点击即可查看原文。流式渲染，逐字呈现，如同 ChatGPT 般丝滑。</p>
+      <img src="screenshots/04-chat-answer.png" alt="智能问答" />
+    </div>
+    <div class="feature-card">
+      <h3>🔍 混合检索</h3>
+      <p>向量语义检索 + 关键词精确匹配，RRF 融合排序。找内容，又快又准。</p>
+      <img src="screenshots/05-search.png" alt="检索" />
+    </div>
+    <div class="feature-card">
+      <h3>⚙️ 灵活配置</h3>
+      <p>一键切换模型，绑定自己的 API Key。上下文用量可视化，自动压缩长对话。</p>
+      <img src="screenshots/06-settings.png" alt="设置" />
+    </div>
+  </div>
+</section>
+
+<!-- AI 深度 -->
+<section class="section section-dark" id="ai">
+  <div class="section-eyebrow">Agent + RAG</div>
+  <h2>不只是检索</h2>
+  <p class="section-sub">助手拥有工具调用能力，能根据你的问题自动选择最佳检索策略。</p>
+
+  <div class="features">
+    <div class="feature-card full">
+      <h3>🤖 智能工具调用</h3>
+      <p>助手不只是简单检索。它能根据问题意图，自动调用知识库检索、关键词搜索、文档列表、创建笔记等工具。你说「帮我记下这个公式」，它就自动创建笔记并入库。</p>
+    </div>
+    <div class="feature-card">
+      <h3>🧠 长上下文记忆</h3>
+      <p>完整对话历史自动管理。接近窗口上限时自动压缩，保留关键信息。多轮对话无缝衔接。</p>
+    </div>
+    <div class="feature-card">
+      <h3>🔒 多租户隔离</h3>
+      <p>每个用户的知识库完全独立。你的文档只有你能看到。安全、私密、可靠。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 数据 -->
+<section class="section">
+  <div class="stats">
+    <div class="stat"><div class="stat-num">6+</div><div class="stat-label">支持格式</div></div>
+    <div class="stat"><div class="stat-num">1M</div><div class="stat-label">上下文窗口</div></div>
+    <div class="stat"><div class="stat-num">5</div><div class="stat-label">智能工具</div></div>
+    <div class="stat"><div class="stat-num">∞</div><div class="stat-label">文档数量</div></div>
+  </div>
+</section>
+
+<!-- 技术架构 -->
+<section class="section section-dark" id="tech">
+  <div class="section-eyebrow">技术架构</div>
+  <h2>为性能而构建</h2>
+  <p class="section-sub">现代技术栈，每一层都经过压力测试。</p>
+
+  <div class="tech-grid">
+    <div class="tech-item">
+      <div class="tech-icon">🔵</div>
+      <h4>DeepSeek v4-pro</h4>
+      <p>推理增强模型<br>1M 上下文窗口</p>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">🟣</div>
+      <h4>智谱 embedding-3</h4>
+      <p>1024 维向量<br>中文场景优化</p>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">🐘</div>
+      <h4>PostgreSQL</h4>
+      <p>pgvector + pg_trgm<br>向量+全文混合检索</p>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">⚡</div>
+      <h4>Fastify + React</h4>
+      <p>高并发后端<br>流式渲染前端</p>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">📮</div>
+      <h4>Redis 队列</h4>
+      <p>异步摄入处理<br>ACK 可靠投递</p>
+    </div>
+    <div class="tech-item">
+      <div class="tech-icon">🛡️</div>
+      <h4>安全加固</h4>
+      <p>多租户隔离<br>限流 + 重试 + 容灾</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section" id="start">
+  <h2>开始构建你的<br>私人知识库</h2>
+  <p class="section-sub">注册账号，上传第一份文档，30 秒内开始提问。</p>
+  <a href="#"><button class="btn-primary" style="font-size: 19px; padding: 16px 40px;">免费开始</button></a>
+  <div style="margin-top: 16px;">
+    <img src="screenshots/07-auth.png" alt="注册" style="max-width: 380px; margin: 32px auto 0; border-radius: var(--radius-lg); box-shadow: 0 20px 60px rgba(0,0,0,0.1);" />
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="#features">功能</a>
+    <a href="#tech">技术</a>
+    <a href="#start">开始</a>
+    <a href="#">隐私</a>
+    <a href="#">GitHub</a>
+  </div>
+  <p>© 2026 私人知识库 · 基于 DeepSeek + 智谱 AI · 为知识工作者打造</p>
+</footer>
+
+</body>
+</html>

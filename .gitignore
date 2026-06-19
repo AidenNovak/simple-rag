@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.production
+data/
+*.log
+.DS_Store
+web/dist
+.vite/
+*.tsbuildinfo
+
+# 构建产物
+server/dist/
+
+# 备份
+backups/
+*.sql.gz
