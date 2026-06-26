@@ -16,6 +16,8 @@ import { compressHistory } from "../llm/compress.js";
 import { sanitizeLLMOutput, hasLeakedToolCalls } from "../llm/sanitize.js";
 import { logger } from "../config/logger.js";
 import { config } from "../config/index.js";
+import { getDb, schema } from "../db/client.js";
+import { and, eq } from "drizzle-orm";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
 
 /** 引用来源（前端展示用）。 */
@@ -124,13 +126,50 @@ export async function generateTitle(question: string, answer: string, creds: Use
   }
 }
 
+/** 当前打开的笔记上下文（工作台注入，agent 回答优先基于它）。 */
+export interface ContextNote {
+  id: string;
+  title: string;
+  content: string;
+}
+
+/** 选区形状（与前端 Selection 一致；D2 数据契约）。 */
+export interface SelectionContext {
+  docId: string;
+  text: string;
+  start?: number;
+  end?: number;
+}
+
+/** 构造选区注入块（独立导出，供单测验证）。 */
+export function buildSelectionContext(sel: SelectionContext, docTitle: string): string {
+  return [
+    "## 用户当前选区（优先回答此片段）",
+    `文档：《${docTitle}》`,
+    "```",
+    sel.text,
+    "```",
+  ].join("\n");
+}
+
+/** 把 contextNote + selection 构造为一条注入消息（拼在问题之前，优先级：选区 > 当前笔记 > 全库检索）。 */
+function buildContextNoteMessage(note: ContextNote, selection?: string): string {
+  const head = `<current_note id="${note.id}" title="${note.title}">\n${note.content}\n</current_note>\n用户当前正在编辑此笔记。当用户提到"当前笔记/本文档/这个文件"时即指它。如需修改它，调用 update_note 工具，note_id 为 ${note.id}。`;
+  const tail = selection
+    ? `\n\n<selection>\n${selection}\n</selection>\n用户选中了上述片段，本条提问针对它。`
+    : "";
+  return head + tail;
+}
+
 export async function agentAnswer(
   userId: string,
   question: string,
   creds: UserChatCreds,
   history: { role: "user" | "assistant"; content: string }[] = [],
   docIds?: string[] | null,
-  enableWebSearch?: boolean
+  enableWebSearch?: boolean,
+  contextNote?: ContextNote,
+  selection?: string
 ): Promise<AgentResult> {
   const { apiKey } = resolveChatApiKey(creds);
   if (!apiKey) throw new Error("[agent] no API key resolved (set CHAT_API_KEY or bind user key)");
@@ -143,6 +182,12 @@ export async function agentAnswer(
   const turns: HistoryTurn[] = history.map((h) => ({ role: h.role, content: h.content }));
   const ctxBuilt = buildContextMessages(SYSTEM_PROMPT, turns, question, model);
   let messages = ctxBuilt.messages;
+  // 工作台注入：当前笔记全文 + 选区（若提供），插在用户问题之前（问题必为 messages 末尾）
+  if (contextNote) {
+    const inject = buildContextNoteMessage(contextNote, selection);
+    const lastIdx = messages.length - 1;
+    messages = [...messages.slice(0, lastIdx), { role: "user", content: inject }, messages[lastIdx]];
+  }
   logger.info({ userId, model, historyTurns: history.length, contextTokens: ctxBuilt.tokensUsed, compressed: ctxBuilt.compressed }, "agent start");
 
   const toolCalls: ToolTrace[] = [];
@@ -308,7 +353,8 @@ export type StreamEvent =
   | { type: "citations"; citations: Citation[] }
   | { type: "toolCalls"; toolCalls: ToolTrace[] }
   | { type: "done"; answer: string; citations: Citation[]; toolCalls: ToolTrace[]; usage: unknown }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "doc_patch"; docId: string; title?: string; content: string; previousContent: string };
 
 /**
  * 从流式 JSON 片段中增量提取 `{"answer":"..."}` 的 answer 字符串值。
@@ -457,7 +503,9 @@ export async function* agentAnswerStream(
   creds: UserChatCreds,
   history: { role: "user" | "assistant"; content: string }[] = [],
   docIds?: string[] | null,
-  enableWebSearch?: boolean
+  enableWebSearch?: boolean,
+  contextNote?: ContextNote,
+  selection?: string
 ): AsyncGenerator<StreamEvent, void, unknown> {
   const { apiKey } = resolveChatApiKey(creds);
   if (!apiKey) { yield { type: "error", message: "no API key resolved" }; return; }
@@ -470,6 +518,12 @@ export async function* agentAnswerStream(
   const turns: HistoryTurn[] = history.map((h) => ({ role: h.role, content: h.content }));
   const ctxBuilt = buildContextMessages(SYSTEM_PROMPT, turns, question, model);
   let messages = ctxBuilt.messages;
+  // 工作台注入：当前笔记全文 + 选区（若提供），插在用户问题之前（问题必为 messages 末尾）
+  if (contextNote) {
+    const inject = buildContextNoteMessage(contextNote, selection);
+    const lastIdx = messages.length - 1;
+    messages = [...messages.slice(0, lastIdx), { role: "user", content: inject }, messages[lastIdx]];
+  }
   logger.info({ userId, model, historyTurns: history.length, contextTokens: ctxBuilt.tokensUsed, compressed: ctxBuilt.compressed }, "stream agent start");
 
   const toolCalls: ToolTrace[] = [];
@@ -626,6 +680,16 @@ export async function* agentAnswerStream(
         continue;
       }
       try {
+        // update_note 改文件：执行前抓取 previousContent，执行后推送 doc_patch 供前端 diff
+        let prevContent: string | null = null;
+        if (buf.name === "update_note" && typeof args.note_id === "string") {
+          const db = getDb();
+          const [before] = await db.select({ content: schema.documents.contentMd })
+            .from(schema.documents)
+            .where(and(eq(schema.documents.id, args.note_id), eq(schema.documents.userId, userId)))
+            .limit(1);
+          prevContent = before?.content ?? "";
+        }
         const result = await executeTool(buf.name!, args, ctx);
 
         if (isWebTool(buf.name!)) webSearchCount++;
@@ -640,6 +704,16 @@ export async function* agentAnswerStream(
         });
         // 每执行完一个工具，立即推送给前端（让用户看到逐步过程）
         yield { type: "toolCalls", toolCalls: [toolCalls[toolCalls.length - 1]] };
+        // doc_patch：update_note 成功且有 noteContent → 推送 diff 载荷
+        if (buf.name === "update_note" && toolData?.documentId && prevContent !== null) {
+          yield {
+            type: "doc_patch",
+            docId: toolData.documentId,
+            title: toolData?.title,
+            content: String(args.content ?? toolData.noteContent ?? ""),
+            previousContent: prevContent,
+          };
+        }
         const data = result.data as any;
         if (data?.chunks && Array.isArray(data.chunks)) {
           data.chunks.forEach((c: any) => {

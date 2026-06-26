@@ -3,7 +3,7 @@ import { api } from "../api.js";
 import { IconDeepSeek, DEEPSEEK_BLUE } from "../Icons.js";
 import { useToast } from "../components/Toast.js";
 
-export function SettingsScreen({ user, onUpdate }: { user: any; onUpdate: (u: any) => void }) {
+export function SettingsScreen({ user, onUpdate, onBack }: { user: any; onUpdate: (u: any) => void; onBack?: () => void }) {
   const toast = useToast();
   const [apiKey, setApiKey] = useState("");
   const [baseUrl, setBaseUrl] = useState(user?.chatBaseUrl || "");
@@ -54,7 +54,10 @@ export function SettingsScreen({ user, onUpdate }: { user: any; onUpdate: (u: an
   return (
     <div className="panel">
       <div className="panel-inner">
-        <h1>设置</h1>
+        <div className="row-between" style={{ marginBottom: 4 }}>
+          <h1 style={{ margin: 0 }}>设置</h1>
+          {onBack && <button className="btn-secondary" onClick={onBack}>← 返回工作台</button>}
+        </div>
         <div className="panel-sub">配置模型与 API Key。Chat 走 DeepSeek，Embedding 走智谱 embedding-3。</div>
 
         <div className="card">

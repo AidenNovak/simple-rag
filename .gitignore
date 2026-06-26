@@ -16,3 +16,7 @@ server/dist/
 # 备份
 backups/
 *.sql.gz
+
+# Playwright 测试产物
+test-results/
+playwright-report/

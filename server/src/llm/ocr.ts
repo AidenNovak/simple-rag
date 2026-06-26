@@ -58,7 +58,7 @@ export async function ocrChunkPdf(pdfBytes: Buffer, requestId: string): Promise<
   let lastErr: Error | null = null;
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const resp = await fetch(`${ZHIPU_BASE}/document/layout_parsing`, {
+      const resp = await fetch(`${ZHIPU_BASE}/layout_parsing`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -18,6 +18,27 @@ npm run web:dev                 # 前端 :5173
 
 打开 http://localhost:5173 → 注册 → **设置页绑定你的 Chat API Key** → 上传文档 → 提问。
 
+## 统一工作区（YouMind 式三栏）
+
+登录后进入**三栏工作台**，无需在多个页面间切换：
+
+| 栏位 | 职责 |
+|------|------|
+| 左 240px | 文档/笔记树 + 对话列表（新建/打开/删除/上传） |
+| 中 flex | Markdown 编辑器（标题 + 正文 + 预览切换 + 保存） |
+| 右 380px | AI 对话（流式 + 引用 + 工具时间轴 + 联网） |
+
+**核心交互**：
+- **选区即上下文**：在编辑器选中 ≥10 字 → 自动带入下条提问（优先级：选区 > 当前文档 > 全库检索）
+- **引用可溯源**：点击对话中的引用 chip → 跳转/高亮编辑器对应片段
+- **对话改文件**：在 chat 输入「把第二节改成要点列表」→ Agent 调 `update_note` → 编辑器弹出 diff（采纳/回滚）
+- **⌘K 搜索**：全局快捷键唤起搜索面板，跨知识库检索并打开文档
+- **布局持久化**：拖拽左右栏宽度自动存入 `localStorage`
+
+面板宽度可拖拽调整；<1024px 显示「请用桌面浏览器」提示。
+
+代码位于 `web/src/workspace/`：`WorkspaceStore`（reducer 状态）+ `WorkspaceShell`（布局）+ `FileTree`/`EditorPane`/`ChatPane`/`SelectionContextBar`/`CommandPalette`。
+
 ## 架构
 
 ```text

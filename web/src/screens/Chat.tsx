@@ -55,6 +55,12 @@ interface Props {
   chatModel?: string | null;
   onConvoCreated: (id: string, title: string) => void;
   onModelChange?: (model: string) => void;
+  /** 工作台：当前打开的笔记 id（注入对话上下文）。 */
+  contextDocId?: string | null;
+  /** 工作台：用户在编辑器选中的片段（优先作为对话上下文）。 */
+  selection?: string | null;
+  /** 工作台：agent 通过 update_note 改了当前笔记时回调，通知刷新 + 出 diff。 */
+  onNoteUpdated?: (docId: string) => void;
 }
 
 const TOOL_LABEL: Record<string, string> = {
@@ -72,7 +78,7 @@ const TOOL_LABEL: Record<string, string> = {
   web_scrape: "🌐 网页抓取",
 };
 
-export function ChatView({ activeConvo, chatModel, onConvoCreated, onModelChange }: Props) {
+export function ChatView({ activeConvo, chatModel, onConvoCreated, onModelChange, contextDocId, selection, onNoteUpdated }: Props) {
   const toast = useToast();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -203,7 +209,7 @@ export function ChatView({ activeConvo, chatModel, onConvoCreated, onModelChange
       const res = await fetch(`/api/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ question, conversationId: activeConvo || undefined, webSearch }),
+        body: JSON.stringify({ question, conversationId: activeConvo || undefined, webSearch, ...(contextDocId ? { contextDocId } : {}), ...(selection ? { selection } : {}) }),
         signal: ac.signal,
       });
       if (!res.ok || !res.body) {
@@ -319,6 +325,13 @@ export function ChatView({ activeConvo, chatModel, onConvoCreated, onModelChange
                 c[c.length - 1] = { ...c[c.length - 1], content: answerAcc || (c[c.length-1] as any).content || "", loading: false, followUps: data.followUps || [], activities: activities.map((a) => ({ ...a })), toolCalls: (c[c.length-1] as any).toolCalls };
                 return c;
               });
+              // 工作台联动：agent 调用 update_note 改了当前笔记 → 通知刷新 + 出 diff
+              if (onNoteUpdated && contextDocId) {
+                const updatedId = activities
+                  .filter((a) => a.tool?.name === "update_note" && (a.tool.args as any)?.note_id === contextDocId)
+                  .map((a) => (a.tool!.args as any).note_id)[0];
+                if (updatedId) onNoteUpdated(updatedId);
+              }
               break;
             default:
               // 流式 delta：累积到 answerAcc，但不每次都触发 React 重渲染
@@ -647,6 +660,13 @@ export function ChatView({ activeConvo, chatModel, onConvoCreated, onModelChange
       </div>
 
       <div className="composer-wrap">
+        {/* 工作台上下文提示：当前笔记 / 选区已注入对话 */}
+        {contextDocId && (
+          <div className="ws-context-bar">
+            <IconNote size={12} />
+            <span>已带入当前笔记作为上下文{selection ? `（含选区 ${selection.length} 字）` : ""}</span>
+          </div>
+        )}
         <div className="composer">
           <textarea
             ref={taRef}

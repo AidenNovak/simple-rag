@@ -1,3 +1,7 @@
+/**
+ * @deprecated 统一工作区升级后，笔记编辑已迁移至 web/src/workspace/EditorPane.tsx。
+ * 此文件保留供回滚参考，不再被 App 路由引用。如需恢复分页导航，在 App.tsx 重新引入。
+ */
 import { useState, useEffect } from "react";
 import { api, getToken } from "../api.js";
 import { useToast } from "../components/Toast.js";
