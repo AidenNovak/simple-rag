@@ -60,7 +60,10 @@ export function FileTree() {
       const r = await api.createNote("未命名笔记", "（开始编辑…）");
       const doc = r.document;
       setDocs((ds) => [{ id: doc.id, title: doc.title, kind: "note", status: doc.status, createdAt: doc.createdAt }, ...ds]);
-      dispatch({ type: "SET_ACTIVE_DOC", payload: { id: doc.id, title: doc.title, content: "", kind: "note" } });
+      dispatch({
+        type: "SET_ACTIVE_DOC",
+        payload: { id: doc.id, title: doc.title, content: doc.contentMd || "（开始编辑…）", kind: "note" },
+      });
     } catch { toast("error", "新建失败"); }
   };
 
@@ -76,12 +79,34 @@ export function FileTree() {
     } catch { toast("error", "删除失败"); }
   };
 
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
   const upload = async (f: File) => {
     try {
       await api.upload(f);
-      toast("success", "已上传");
+      toast("success", `已上传「${f.name}」`);
       load();
-    } catch { toast("error", "上传失败"); }
+    } catch { toast("error", `「${f.name}」上传失败`); }
+  };
+  /** 批量上传：逐个上传,累计成功/失败数。 */
+  const uploadMany = async (fileList: FileList | File[]) => {
+    const arr = Array.from(fileList);
+    if (arr.length === 0) return;
+    setUploading(true);
+    let ok = 0, fail = 0;
+    for (const f of arr) {
+      try { await api.upload(f); ok++; } catch { fail++; }
+    }
+    setUploading(false);
+    load();
+    if (fail === 0) toast("success", `已上传 ${ok} 个文件`);
+    else toast(ok > 0 ? "info" : "error", `${ok} 成功，${fail} 失败`);
+  };
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files?.length) uploadMany(e.dataTransfer.files);
   };
 
   const openConvo = (id: string) => dispatch({ type: "SET_CONVO", payload: id });
@@ -127,18 +152,43 @@ export function FileTree() {
         ))}
       </SidebarSection>
 
-      {files.length > 0 && (
-        <SidebarSection title="文件" actionLabel="上传文件" onAction={() => fileInput.current?.click()} actionIcon={<IconUpload size={14} />}>
-          {files.map((d, i) => (<li key={d.id} className="kb-animate-in" style={{ animationDelay: `${i * 20}ms` }}><Row d={d} /></li>))}
+      <div
+        className={`ws-drop-zone${dragOver ? " over" : ""}`}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={onDrop}
+      >
+        <SidebarSection title="文件" actionLabel="上传文件" onAction={() => fileInput.current?.click()} actionIcon={uploading ? "…" : <IconUpload size={14} />}>
+          {uploading && (
+            <li className="ws-tree-uploading">
+              <span className="ws-tree-uploading-dot" /> 上传中…
+            </li>
+          )}
+          {files.length > 0
+            ? files.map((d, i) => (<li key={d.id} className="kb-animate-in" style={{ animationDelay: `${i * 20}ms` }}><Row d={d} /></li>))
+            : !uploading && (
+              <li>
+                <button
+                  className="ws-tree-upload-empty"
+                  data-testid="upload-empty"
+                  onClick={() => fileInput.current?.click()}
+                  title="点击或拖拽上传 PDF / Word / PPT / Excel / Markdown 等"
+                >
+                  <IconUpload size={15} />
+                  <span>上传文件到知识库</span>
+                </button>
+              </li>
+            )
+          }
         </SidebarSection>
-      )}
+      </div>
 
       <input
         ref={fileInput}
         type="file"
         style={{ display: "none" }}
         accept=".pdf,.docx,.doc,.pptx,.xlsx,.xls,.csv,.md,.markdown,.txt,.html,.htm,.epub"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }}
+        onChange={(e) => { if (e.target.files?.length) uploadMany(e.target.files); e.target.value = ""; }}
       />
 
       {loading && <div className="muted ws-sidebar-loading">加载中…</div>}
