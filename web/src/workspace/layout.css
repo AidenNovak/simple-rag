@@ -148,3 +148,20 @@
 .cmdk-title { font-size: 13px; font-weight: 500; color: var(--text); }
 .cmdk-snippet { font-size: 12px; color: var(--text-muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* ===== Live Craft ===== */
+.ws-craft-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 32px;
+  cursor: default;
+}
+.ws-craft-inner { max-width: 720px; }
+.ws-snippet-flash {
+  animation: ws-flash 2s ease-out;
+}
+@keyframes ws-flash {
+  0%, 20% { background: rgba(87, 134, 254, 0.12); }
+  100% { background: transparent; }
+}
+
