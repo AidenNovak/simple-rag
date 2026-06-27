@@ -338,8 +338,17 @@ export function ChatPane({ chatModel }: Props) {
         {isEmpty ? (
           <div className="chat-empty">
             <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.3 }}><IconDeepSeek size={48} /></div>
-            <h1>向你的知识库提问</h1>
-            <div className="hint">{readyCount === 0 ? "知识库为空。左侧新建笔记或上传文档后即可问答。" : "答案会标注来源，点击引用可定位原文。"}</div>
+            {state.activeDocId ? (
+              <>
+                <h1 className="ws-chat-empty-title">围绕「{state.draftTitle || "当前笔记"}」提问</h1>
+                <div className="hint">答案带来源引用，点击 [n] 可定位到中栏笔记</div>
+              </>
+            ) : (
+              <>
+                <h1 className="ws-chat-empty-title">向你的知识库提问</h1>
+                <div className="hint">{readyCount === 0 ? "知识库为空。左侧新建笔记或上传文档。" : "请先在左侧选择一篇笔记"}</div>
+              </>
+            )}
           </div>
         ) : (
           <div className="chat-stream">
@@ -453,7 +462,7 @@ export function ChatPane({ chatModel }: Props) {
           </div>
         )}
         <div className="composer ws-composer">
-          <textarea ref={taRef} rows={1} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(); } }} placeholder={noDocs ? "先新建笔记或上传文档…" : "发送消息（Enter 发送 / Shift+Enter 换行）"} />
+          <textarea ref={taRef} rows={1} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(); } }} placeholder={state.activeDocId ? `关于「${state.draftTitle || "当前笔记"}」提问…` : noDocs ? "先新建笔记或上传文档…" : "请先选择左侧笔记"} />
           <button className={`tool-toggle ${webSearch ? "on" : ""}`} onClick={toggleWebSearch} title={webSearch ? "网络搜索：开启" : "网络搜索：关闭"} aria-pressed={webSearch}><IconGlobe size={16} /><span>联网</span></button>
           {busy ? <button className="send-btn stop" onClick={stop} aria-label="停止生成"><IconStop size={18} /></button> : <button className="send-btn" onClick={ask} disabled={!input.trim() || noDocs} aria-label="发送"><IconSend size={18} /></button>}
         </div>

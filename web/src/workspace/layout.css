@@ -231,3 +231,18 @@
 }
 .ws-file-peek-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
 
+/* 右栏工作区化：取消 chat-stream/chat-empty 的 768px 居中 */
+.ws-chat .chat-stream,
+.ws-chat .chat-empty {
+  max-width: none;
+  margin: 0;
+  padding: 16px 14px 24px;
+}
+.ws-chat .chat-empty h1,
+.ws-chat .ws-chat-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.ws-chat .chat-empty .hint { font-size: 13px; }
+
