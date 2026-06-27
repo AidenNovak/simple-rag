@@ -226,6 +226,43 @@ const tools = {
   },
 
   /**
+   * 检索用户的历史对话（按关键词模糊匹配 messages.content）。
+   * 多租户隔离：只搜该 user_id 的消息。用于"我之前问过/聊过 X"这类场景。
+   * 返回命中的对话片段（角色 + 内容预览 + 时间 + 会话ID）。
+   */
+  search_conversations: async (args: { query: string; top_k?: number }, ctx: ToolContext): Promise<ToolResult> => {
+    const client = await getPoolClient();
+    try {
+      const res = await client.query(
+        `SELECT m.id, m.conversation_id, m.role, m.content, m.created_at,
+                c.title AS convo_title,
+                similarity(m.content, $2) AS sim
+         FROM messages m
+         LEFT JOIN conversations c ON c.id = m.conversation_id
+         WHERE m.user_id = $1 AND m.content % $2
+         ORDER BY sim DESC, m.created_at DESC
+         LIMIT $3`,
+        [ctx.userId, args.query, Math.min(args.top_k ?? 6, 15)]
+      );
+      const content = res.rows.length
+        ? res.rows.map((r: any, i: number) => {
+            const when = new Date(r.created_at).toLocaleString("zh-CN", { dateStyle: "short", timeStyle: "short" });
+            const role = r.role === "user" ? "用户" : r.role === "assistant" ? "助手" : r.role;
+            const preview = (r.content || "").slice(0, 300);
+            return `【${i + 1}】[${when}] ${role}${r.convo_title ? ` @《${r.convo_title}》` : ""}\n${preview}`;
+          }).join("\n\n---\n\n")
+        : "（未在历史对话中找到相关内容）";
+      return {
+        name: "search_conversations",
+        content,
+        data: { count: res.rows.length, matches: res.rows.map((r: any) => ({ conversationId: r.conversation_id, role: r.role, when: r.created_at })) },
+      };
+    } finally {
+      client.release();
+    }
+  },
+
+  /**
    * 获取当前时间：让模型知道实时日期时间。
    */
   get_time: async (_args: {}, _ctx: ToolContext): Promise<ToolResult> => {
@@ -445,6 +482,21 @@ export const TOOL_DEFS: ToolDef[] = [
           answer: { type: "string", description: "给用户的最终回答（支持 Markdown，可用 [n] 标注引用）" },
         },
         required: ["answer"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_conversations",
+      description: "检索用户的历史对话（按关键词模糊匹配）。当用户问「我之前问过/聊过 X」「上次提到的那个」时使用。多租户隔离，只搜该用户自己的对话。",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "要查找的关键词或描述" },
+          top_k: { type: "integer", description: "返回数量，默认 6", minimum: 1, maximum: 15 },
+        },
+        required: ["query"],
       },
     },
   },
