@@ -18,7 +18,7 @@ export function WorkspaceShell({ user, onOpenSettings }: Props) {
           <>
             <span style={{ marginLeft: "auto" }} />
             <ThemeToggle />
-            <span className="muted" style={{ fontSize: 13 }}>{user.email}</span>
+            <span className="muted text-caption">{user.email}</span>
             <button type="button" className="btn-secondary" style={{ padding: "4px 12px", fontSize: 13 }} onClick={onOpenSettings}>设置</button>
           </>
         }

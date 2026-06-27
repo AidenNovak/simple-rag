@@ -317,7 +317,7 @@ export function ChatPane({ chatModel }: Props) {
   return (
     <div className="ws-chat" data-testid="chat-pane">
       <div className="ws-chat-header">
-        <div className="row" style={{ gap: 10, flex: 1 }}>
+        <div className="row gap-3" style={{ flex: 1 }}>
           {allDocs.length > 0 && (
             <ScopeDropdown
               docs={allDocs}
@@ -330,12 +330,12 @@ export function ChatPane({ chatModel }: Props) {
             />
           )}
           {chatModel && (
-            <div className="row muted" style={{ fontSize: 12, gap: 4 }}>
+            <div className="row muted text-caption gap-2">
               <IconDeepSeek size={12} /> {chatModel}
             </div>
           )}
           {noteTotal !== null && readyCount !== null && (
-            <span className="muted ws-doc-count" style={{ fontSize: 12 }}>
+            <span className="muted ws-doc-count text-caption">
               {noteTotal === readyCount ? `${readyCount} 篇可检索` : `${noteTotal} 笔记 · ${readyCount} 可检索`}
             </span>
           )}
