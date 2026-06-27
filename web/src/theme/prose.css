@@ -172,3 +172,43 @@
   padding: 2px 6px;
   border-radius: 4px;
 }
+
+/* ===== 代码块语言标签 + 复制按钮 ===== */
+.ws-prose pre[data-lang]::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  font-family: ui-monospace, monospace;
+  pointer-events: none;
+  z-index: 1;
+}
+.ws-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 11px;
+  color: var(--ink-muted);
+  background: rgba(26, 22, 18, 0.06);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+  z-index: 2;
+}
+.ws-prose pre[data-lang] .ws-copy-btn {
+  right: 48px;
+}
+.ws-prose pre:hover .ws-copy-btn {
+  opacity: 1;
+}
+.ws-copy-btn:hover {
+  background: rgba(26, 22, 18, 0.1);
+  color: var(--ink);
+}
