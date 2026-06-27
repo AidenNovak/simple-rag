@@ -41,4 +41,46 @@ describe("workspaceReducer", () => {
     expect(raw).toBeTruthy();
     expect(JSON.parse(raw!).leftWidth).toBe(300);
   });
+
+  it("SET_CONTEXT_DOC updates context without activeDoc", () => {
+    const s = workspaceReducer(initialWorkspaceState, {
+      type: "SET_CONTEXT_DOC",
+      payload: { id: "n9", title: "Ref Note" },
+    });
+    expect(s.contextDocId).toBe("n9");
+    expect(s.contextDocTitle).toBe("Ref Note");
+    expect(s.activeDocId).toBeNull();
+  });
+
+  it("SET_ACTIVE_DOC note syncs contextDocId", () => {
+    const s = workspaceReducer(initialWorkspaceState, {
+      type: "SET_ACTIVE_DOC",
+      payload: { id: "d2", title: "T", content: "c", kind: "note" },
+    });
+    expect(s.contextDocId).toBe("d2");
+    expect(s.contextDocTitle).toBe("T");
+  });
+
+  it("SET_ACTIVE_DOC upload does not change contextDocId", () => {
+    const withCtx = workspaceReducer(initialWorkspaceState, {
+      type: "SET_CONTEXT_DOC",
+      payload: { id: "n1", title: "Keep" },
+    });
+    const s = workspaceReducer(withCtx, {
+      type: "SET_ACTIVE_DOC",
+      payload: { id: "f1", title: "File", content: "", kind: "upload" },
+    });
+    expect(s.contextDocId).toBe("n1");
+    expect(s.activeDocId).toBe("f1");
+  });
+
+  it("CLEAR_CONTEXT_DOC clears context fields", () => {
+    const withCtx = workspaceReducer(initialWorkspaceState, {
+      type: "SET_CONTEXT_DOC",
+      payload: { id: "n1", title: "X" },
+    });
+    const s = workspaceReducer(withCtx, { type: "CLEAR_CONTEXT_DOC" });
+    expect(s.contextDocId).toBeNull();
+    expect(s.contextDocTitle).toBeNull();
+  });
 });

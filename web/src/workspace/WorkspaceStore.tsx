@@ -12,6 +12,8 @@ export interface WorkspaceState {
   scopeDocIds: string[] | null;
   layout: LayoutPrefs;
   pendingPatch: PendingPatch | null;
+  contextDocId: string | null;
+  contextDocTitle: string | null;
 }
 
 const DEFAULT_LAYOUT: LayoutPrefs = { leftWidth: 240, rightWidth: 380, leftCollapsed: false };
@@ -27,6 +29,8 @@ export const initialWorkspaceState: WorkspaceState = {
   scopeDocIds: null,
   layout: loadLayout(),
   pendingPatch: null,
+  contextDocId: null,
+  contextDocTitle: null,
 };
 
 function loadLayout(): LayoutPrefs {
@@ -41,8 +45,8 @@ function loadLayout(): LayoutPrefs {
 
 export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState {
   switch (action.type) {
-    case "SET_ACTIVE_DOC":
-      return {
+    case "SET_ACTIVE_DOC": {
+      const base = {
         ...state,
         activeDocId: action.payload.id,
         activeDocKind: action.payload.kind,
@@ -52,6 +56,23 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
         selection: null,
         scopeDocIds: [action.payload.id],
       };
+      if (action.payload.kind === "note") {
+        return {
+          ...base,
+          contextDocId: action.payload.id,
+          contextDocTitle: action.payload.title,
+        };
+      }
+      return base;
+    }
+    case "SET_CONTEXT_DOC":
+      return {
+        ...state,
+        contextDocId: action.payload.id,
+        contextDocTitle: action.payload.title,
+      };
+    case "CLEAR_CONTEXT_DOC":
+      return { ...state, contextDocId: null, contextDocTitle: null };
     case "SET_DRAFT_TITLE":
       return { ...state, draftTitle: action.payload, dirty: true };
     case "SET_DRAFT_CONTENT":
