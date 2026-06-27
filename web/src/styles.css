@@ -265,8 +265,10 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; back
 /* 段落 */
 .markstream-react p { color: var(--text) !important; }
 /* strong/em */
-.markstream-react strong { color: #fff !important; }
-.markstream-react em { color: var(--text) !important; }
+.markstream-react strong { color: var(--ink) !important; }
+[data-theme="dark"] .markstream-react strong { color: var(--text) !important; }
+.markstream-react em { color: var(--ink-secondary) !important; }
+[data-theme="dark"] .markstream-react em { color: var(--text) !important; }
 
 .citations {
   margin-top: 16px; padding-top: 12px;
@@ -282,11 +284,11 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; back
 }
 .cite-chip:hover { background: var(--cite-hover); }
 .cite-chip .cite-n {
-  font-weight: 600; color: #5786FE;
-  background: rgba(87,134,254,0.15); border-radius: 4px; padding: 1px 6px;
+  font-weight: 600; color: var(--accent-amber);
+  background: var(--cite-bg); border-radius: 4px; padding: 1px 6px;
   font-size: 11px;
 }
-.cite-chip .cite-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #b4b4b4; }
+.cite-chip .cite-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-secondary); }
 
 /* 答案正文中 [n] 引用角标样式 — 与下方 cite-chip 蓝色主题一致 */
 .markstream-react .inline-cite {

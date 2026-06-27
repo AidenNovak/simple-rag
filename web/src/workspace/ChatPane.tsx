@@ -19,6 +19,7 @@ import { ScopeDropdown } from "./ScopeDropdown.js";
 import { FilePeekPanel } from "./FilePeekPanel.js";
 import { ReferenceNotePicker } from "./ReferenceNotePicker.js";
 import { ContextRefBar } from "./ContextRefBar.js";
+import { useMarkstreamDark } from "../theme/useMarkstreamDark.js";
 
 const INLINE_CITE_RE = /\[(\d{1,3})\]/;
 function CitationTextNode(props: NodeComponentProps<{ type: "text"; content: string; center?: boolean }>) {
@@ -57,6 +58,7 @@ interface Props { chatModel?: string | null; }
 export function ChatPane({ chatModel }: Props) {
   const toast = useToast();
   const { state, dispatch } = useWorkspace();
+  const markstreamDark = useMarkstreamDark();
   const activeConvo = state.convoId;
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -419,7 +421,7 @@ export function ChatPane({ chatModel }: Props) {
                 })()}
                 <div className={`bubble ${m.loading && !m.content ? "typing-cursor" : ""}`}>
                   {m.role === "assistant" ? (
-                    <MarkdownRender content={normalizeMath(m.content)} final={!m.loading} fade={false} dark customComponents={MARKSTREAM_CUSTOM} />
+                    <MarkdownRender content={normalizeMath(m.content)} final={!m.loading} fade={false} dark={markstreamDark} customComponents={MARKSTREAM_CUSTOM} />
                   ) : m.content}
                 </div>
 

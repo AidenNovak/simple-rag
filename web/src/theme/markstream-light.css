@@ -52,3 +52,11 @@
 :root:not([data-theme="dark"]) .markstream-react .inline-cite:hover {
   background: var(--cite-hover) !important;
 }
+[data-theme="light"] .markstream-react strong,
+:root:not([data-theme="dark"]) .markstream-react strong {
+  color: var(--ink) !important;
+}
+[data-theme="light"] .markstream-react em,
+:root:not([data-theme="dark"]) .markstream-react em {
+  color: var(--ink-secondary) !important;
+}
