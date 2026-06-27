@@ -17,6 +17,8 @@ import "katex/dist/katex.min.css";
 import { useWorkspace } from "./WorkspaceStore.js";
 import { ScopeDropdown } from "./ScopeDropdown.js";
 import { FilePeekPanel } from "./FilePeekPanel.js";
+import { ReferenceNotePicker } from "./ReferenceNotePicker.js";
+import { ContextRefBar } from "./ContextRefBar.js";
 
 const INLINE_CITE_RE = /\[(\d{1,3})\]/;
 function CitationTextNode(props: NodeComponentProps<{ type: "text"; content: string; center?: boolean }>) {
@@ -150,8 +152,9 @@ export function ChatPane({ chatModel }: Props) {
 
     try {
       const selText = pinnedSelection || state.selection?.text || undefined;
-      const selection = selText && state.activeDocId
-        ? { docId: state.activeDocId, text: selText, start: state.selection?.start, end: state.selection?.end }
+      const ctxId = state.contextDocId;
+      const selection = selText && ctxId
+        ? { docId: ctxId, text: selText, start: state.selection?.start, end: state.selection?.end }
         : undefined;
       const res = await fetch(`/api/chat/stream`, {
         method: "POST",
@@ -159,7 +162,7 @@ export function ChatPane({ chatModel }: Props) {
         body: JSON.stringify({
           question, conversationId: activeConvo || undefined, webSearch,
           ...(selection ? { selection } : {}),
-          ...(state.activeDocId ? { contextDocId: state.activeDocId } : {}),
+          ...(ctxId ? { contextDocId: ctxId } : {}),
         }),
         signal: ac.signal,
       });
@@ -304,6 +307,9 @@ export function ChatPane({ chatModel }: Props) {
 
   const isEmpty = messages.length === 0;
   const noDocs = readyCount !== null && readyCount === 0;
+  const refNotes = allDocs
+    .filter((d: any) => d.kind === "note" && d.status === "ready")
+    .map((d: any) => ({ id: d.id, title: d.title }));
   const lastMsg = messages[messages.length - 1];
   const isThinking = busy && lastMsg?.role === "assistant" && !lastMsg.content;
 
@@ -336,19 +342,12 @@ export function ChatPane({ chatModel }: Props) {
 
       <div className="chat-scroll" ref={scrollRef} style={{ flex: 1 }}>
         {isEmpty ? (
-          <div className="chat-empty">
-            <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.3 }}><IconDeepSeek size={48} /></div>
-            {state.activeDocId ? (
-              <>
-                <h1 className="ws-chat-empty-title">围绕「{state.draftTitle || "当前笔记"}」提问</h1>
-                <div className="hint">答案带来源引用，点击 [n] 可定位到中栏笔记</div>
-              </>
-            ) : (
-              <>
-                <h1 className="ws-chat-empty-title">向你的知识库提问</h1>
-                <div className="hint">{readyCount === 0 ? "知识库为空。左侧新建笔记或上传文档。" : "请先在左侧选择一篇笔记"}</div>
-              </>
-            )}
+          <div className="chat-empty ws-chat-empty">
+            <ReferenceNotePicker
+              notes={refNotes}
+              selectedId={state.contextDocId}
+              onSelect={(id, title) => dispatch({ type: "SET_CONTEXT_DOC", payload: { id, title } })}
+            />
           </div>
         ) : (
           <div className="chat-stream">
@@ -454,6 +453,15 @@ export function ChatPane({ chatModel }: Props) {
       </div>
 
       <div className="ws-composer-stack" data-testid="composer-stack">
+        {state.contextDocId && state.contextDocTitle && (
+          <ContextRefBar
+            title={state.contextDocTitle}
+            selectedId={state.contextDocId}
+            notes={refNotes}
+            onSelect={(id, title) => dispatch({ type: "SET_CONTEXT_DOC", payload: { id, title } })}
+            onClear={() => dispatch({ type: "CLEAR_CONTEXT_DOC" })}
+          />
+        )}
         {(pinnedSelection || state.selection) && (
           <div className="ws-context-bar">
             <IconSource size={12} />
@@ -462,9 +470,9 @@ export function ChatPane({ chatModel }: Props) {
           </div>
         )}
         <div className="composer ws-composer">
-          <textarea ref={taRef} rows={1} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(); } }} placeholder={state.activeDocId ? `关于「${state.draftTitle || "当前笔记"}」提问…` : noDocs ? "先新建笔记或上传文档…" : "请先选择左侧笔记"} />
+          <textarea ref={taRef} rows={1} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(); } }} placeholder={state.contextDocId ? `关于「${state.contextDocTitle}」提问…` : noDocs ? "先新建笔记或上传文档…" : "请先选择参考笔记"} />
           <button className={`tool-toggle ${webSearch ? "on" : ""}`} onClick={toggleWebSearch} title={webSearch ? "网络搜索：开启" : "网络搜索：关闭"} aria-pressed={webSearch}><IconGlobe size={16} /><span>联网</span></button>
-          {busy ? <button className="send-btn stop" onClick={stop} aria-label="停止生成"><IconStop size={18} /></button> : <button className="send-btn" onClick={ask} disabled={!input.trim() || noDocs} aria-label="发送"><IconSend size={18} /></button>}
+          {busy ? <button className="send-btn stop" onClick={stop} aria-label="停止生成"><IconStop size={18} /></button> : <button className="send-btn" onClick={ask} disabled={!input.trim() || noDocs || !state.contextDocId} aria-label="发送"><IconSend size={18} /></button>}
         </div>
       </div>
 

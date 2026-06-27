@@ -1,47 +1,38 @@
 import { render, screen } from "@testing-library/react";
-import { useEffect } from "react";
+import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
-import { WorkspaceProvider, useWorkspace } from "../WorkspaceStore.js";
+import { WorkspaceProvider } from "../WorkspaceStore.js";
 import { ChatPane } from "../ChatPane.js";
 
 vi.mock("../../api.js", () => ({
   api: {
-    listDocs: vi.fn().mockResolvedValue({ documents: [{ id: "1", title: "N", status: "ready" }] }),
+    listDocs: vi.fn().mockResolvedValue({
+      documents: [
+        { id: "n1", title: "Note A", kind: "note", status: "ready" },
+        { id: "n2", title: "Note B", kind: "note", status: "ready" },
+      ],
+    }),
     listConversations: vi.fn().mockResolvedValue({ conversations: [] }),
     getMessages: vi.fn().mockResolvedValue({ messages: [] }),
   },
   getToken: () => "t",
 }));
 vi.mock("markstream-react", () => ({ default: () => null, TextNode: () => null }));
-vi.mock("../../components/DocPreview.js", () => ({ DocPreview: () => null }));
 vi.mock("../../components/Toast.js", () => ({ useToast: () => () => {} }));
 vi.mock("../ScopeDropdown.js", () => ({ ScopeDropdown: () => null }));
 vi.mock("../FilePeekPanel.js", () => ({ FilePeekPanel: () => null }));
 
-function Seed({ title, children }: { title: string; children: React.ReactNode }) {
-  const { dispatch } = useWorkspace();
-  useEffect(() => {
-    dispatch({ type: "SET_ACTIVE_DOC", payload: { id: "n1", title, content: "body", kind: "note" } });
-  }, [dispatch, title]);
-  return <>{children}</>;
-}
-
-describe("ChatPane workspace copy", () => {
-  it("empty state mentions current note when activeDoc set", () => {
-    render(
-      <WorkspaceProvider>
-        <Seed title="My Note"><ChatPane /></Seed>
-      </WorkspaceProvider>
-    );
-    expect(screen.getByText(/My Note/)).toBeTruthy();
+describe("ChatPane context picker", () => {
+  it("empty state shows reference note picker", async () => {
+    render(<WorkspaceProvider><ChatPane /></WorkspaceProvider>);
+    expect(await screen.findByTestId("ref-note-picker")).toBeInTheDocument();
+    expect(screen.getByText("选择参考笔记")).toBeInTheDocument();
   });
 
-  it("empty state prompts to select note when no activeDoc", () => {
-    render(
-      <WorkspaceProvider>
-        <ChatPane />
-      </WorkspaceProvider>
-    );
-    expect(screen.getByText(/请先在左侧选择一篇笔记/)).toBeTruthy();
+  it("selecting note sets context without requiring activeDoc", async () => {
+    const user = userEvent.setup();
+    render(<WorkspaceProvider><ChatPane /></WorkspaceProvider>);
+    await user.click(await screen.findByRole("button", { name: /Note B/ }));
+    expect(screen.getByTestId("context-ref-bar")).toHaveTextContent("参考：Note B");
   });
 });

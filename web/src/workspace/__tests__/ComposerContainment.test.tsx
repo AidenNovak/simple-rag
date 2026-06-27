@@ -25,7 +25,7 @@ describe("ChatPane composer containment", () => {
   it("composer textarea is inside ws-chat", () => {
     render(<WorkspaceProvider><ChatPane /></WorkspaceProvider>);
     const chat = document.querySelector(".ws-chat")!;
-    const ta = screen.getByPlaceholderText(/请先选择左侧笔记|关于|发送消息/);
+    const ta = screen.getByPlaceholderText(/请先选择参考笔记|关于|发送消息|请先选择左侧笔记/);
     expect(chat.contains(ta)).toBe(true);
   });
 });
