@@ -123,6 +123,28 @@ export const messages = pgTable(
   (t) => ({ convIdx: index("msg_conv_idx").on(t.conversationId, t.createdAt) })
 );
 
+// ---- MCP API token（三大 harness 后端进程用，非浏览器 JWT）----
+// 明文 token 仅创建时返回一次；DB 只存 SHA-256 哈希。
+// 用于把外部 agent（Claude Code/Codex/Cursor）绑定到某个 user_id。
+export const mcpTokens = pgTable(
+  "mcp_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    label: text("label"),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (t) => ({
+    hashIdx: index("idx_mcp_tokens_hash").on(t.tokenHash),
+    userIdx: index("idx_mcp_tokens_user").on(t.userId),
+  })
+);
+
+export type McpToken = typeof mcpTokens.$inferSelect;
+
 export type User = typeof users.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type Chunk = typeof chunks.$inferSelect;
