@@ -24,6 +24,7 @@ import { documentRoutes } from "./routes/documents.js";
 import { chatRoutes } from "./routes/chat.js";
 import { searchRoutes } from "./routes/search.js";
 import { exportRoutes } from "./routes/export.js";
+import { mcpRoutes } from "./routes/mcp.js";
 import { logger } from "./config/logger.js";
 
 async function main() {
@@ -81,6 +82,7 @@ async function main() {
   await app.register(chatRoutes, { prefix: "/api" });
   await app.register(searchRoutes, { prefix: "/api" });
   await app.register(exportRoutes, { prefix: "/api" });
+  await app.register(mcpRoutes, { prefix: "/api" });
 
   // 生产：托管前端静态资源
   if (config.nodeEnv === "production") {
