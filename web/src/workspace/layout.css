@@ -108,8 +108,30 @@
 .diff-line.del .diff-sign { color: var(--danger); }
 .diff-text { flex: 1; }
 
-/* 右：对话（复用现有 .chat-scroll/.composer/.bubble 等）*/
-.ws-chat { display: flex; flex-direction: column; height: 100%; background: var(--bg-main); }
+/* 右：对话 containment：composer 必须是 flex 子节点，禁止 absolute 逃逸 */
+.ws-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-main);
+}
+.ws-chat .chat-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.ws-composer-stack {
+  flex-shrink: 0;
+  padding: 8px 12px 12px;
+  background: var(--bg-main);
+  border-top: 1px solid var(--border);
+}
+.ws-composer {
+  max-width: none;
+  margin: 0;
+}
 .ws-chat-header { display: flex; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .ws-context-bar { display: flex; align-items: center; gap: 6px; padding: 4px 14px; font-size: 11px; color: var(--text-muted); background: rgba(87,134,254,0.08); border-radius: 6px; margin-bottom: 6px; }
 .ws-context-clear { color: var(--text-muted); font-size: 14px; padding: 0 4px; }

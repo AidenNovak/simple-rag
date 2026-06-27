@@ -447,7 +447,7 @@ export function ChatPane({ chatModel }: Props) {
         )}
       </div>
 
-      <div className="composer-wrap">
+      <div className="ws-composer-stack" data-testid="composer-stack">
         {(pinnedSelection || state.selection) && (
           <div className="ws-context-bar">
             <IconSource size={12} />
@@ -455,7 +455,7 @@ export function ChatPane({ chatModel }: Props) {
             <button className="ws-context-clear" onClick={() => { setPinnedSelection(null); dispatch({ type: "CLEAR_SELECTION" }); }}>×</button>
           </div>
         )}
-        <div className="composer">
+        <div className="composer ws-composer">
           <textarea ref={taRef} rows={1} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(); } }} placeholder={noDocs ? "先新建笔记或上传文档…" : "发送消息（Enter 发送 / Shift+Enter 换行）"} />
           <button className={`tool-toggle ${webSearch ? "on" : ""}`} onClick={toggleWebSearch} title={webSearch ? "网络搜索：开启" : "网络搜索：关闭"} aria-pressed={webSearch}><IconGlobe size={16} /><span>联网</span></button>
           {busy ? <button className="send-btn stop" onClick={stop} aria-label="停止生成"><IconStop size={18} /></button> : <button className="send-btn" onClick={ask} disabled={!input.trim() || noDocs} aria-label="发送"><IconSend size={18} /></button>}

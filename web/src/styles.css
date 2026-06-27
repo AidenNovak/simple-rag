@@ -362,6 +362,8 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; back
   background: linear-gradient(to bottom, transparent, var(--bg-main) 30%);
   pointer-events: none;
 }
+/* 工作区 Chat 不使用 absolute composer（见 layout.css ws-composer-stack） */
+.ws-chat .composer-wrap { display: none; }
 .composer {
   max-width: var(--maxw-chat); margin: 0 auto;
   background: var(--bg-input);
