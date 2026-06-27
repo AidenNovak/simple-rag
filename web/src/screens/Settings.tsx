@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../api.js";
 import { IconDeepSeek, DEEPSEEK_BLUE } from "../Icons.js";
 import { useToast } from "../components/Toast.js";
+import { McpTokensCard } from "./McpTokensCard.js";
 
 export function SettingsScreen({ user, onUpdate, onBack }: { user: any; onUpdate: (u: any) => void; onBack?: () => void }) {
   const toast = useToast();
@@ -99,6 +100,8 @@ export function SettingsScreen({ user, onUpdate, onBack }: { user: any; onUpdate
             {savingKey ? "保存中…" : "保存配置"}
           </button>
         </div>
+
+        <McpTokensCard />
 
         <div className="card">
           <h2>Embedding</h2>

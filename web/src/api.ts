@@ -71,4 +71,10 @@ export const api = {
   // search
   search: (query: string, topK = 10) =>
     req("/search", { method: "POST", body: JSON.stringify({ query, topK }), headers: { "Content-Type": "application/json" } }),
+
+  // mcp tokens —— 给本地 agent（Cursor/Claude Code/Codex）授权检索知识库
+  listMcpTokens: () => req("/mcp-tokens"),
+  createMcpToken: (label: string) =>
+    req("/mcp-tokens", { method: "POST", body: JSON.stringify({ label }), headers: { "Content-Type": "application/json" } }),
+  revokeMcpToken: (id: string) => req(`/mcp-tokens/${id}`, { method: "DELETE" }),
 };
