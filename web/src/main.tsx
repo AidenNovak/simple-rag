@@ -6,6 +6,7 @@ import { applyTheme, getStoredTheme } from "./theme/useTheme.js";
 import "./theme/tokens.css";
 import "./theme/typography.css";
 import "./theme/motion.css";
+import "./theme/prose.css";
 import "./ui/ui.css";
 import "./styles.css";
 

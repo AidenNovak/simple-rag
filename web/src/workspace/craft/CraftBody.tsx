@@ -1,8 +1,9 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import MarkdownRender from "markstream-react";
 import "markstream-react/index.css";
 import "katex/dist/katex.min.css";
 import { normalizeMath } from "./normalizeMath.js";
+import { useMarkstreamDark } from "../../theme/useMarkstreamDark.js";
 
 const MIN_PICK_LEN = 10;
 
@@ -17,6 +18,7 @@ interface Props {
 export function CraftBody({ content, onOpenPeek, onPick, scrollContainerRef }: Props) {
   const innerRef = useRef<HTMLDivElement>(null);
   const ref = scrollContainerRef ?? innerRef;
+  const dark = useMarkstreamDark();
 
   const handleMouseUp = () => {
     const sel = window.getSelection();
@@ -32,8 +34,8 @@ export function CraftBody({ content, onOpenPeek, onPick, scrollContainerRef }: P
       onDoubleClick={onOpenPeek}
       onMouseUp={handleMouseUp}
     >
-      <div className="ws-craft-inner markstream-react">
-        <MarkdownRender content={normalizeMath(content)} final={true} fade={false} dark />
+      <div className="ws-craft-inner markstream-react ws-prose">
+        <MarkdownRender content={normalizeMath(content)} final={true} fade={false} dark={dark} />
       </div>
     </div>
   );
