@@ -1,103 +1,50 @@
-// 真实 SVG 图标（Lucide 风格，stroke-based，无第三方依赖）
-// 替代 emoji 占位符，统一 1.75 描边，currentColor 继承。
-
+// 图标统一走 lucide-react，保持现有 Icon* 命名（调用方零改动）。
+// 默认 strokeWidth=1.75（与旧手写一致），size 由调用方传入。
 import React from "react";
+import {
+  MessageSquare, Library, FileText, Search, Settings, Plus, Send,
+  BookOpen, File as FileIconLucide, Upload, Trash2, Wrench, Music2,
+  Check, AlertCircle, Loader2, Copy, RefreshCw, Square, Paperclip,
+  X, Menu, Pencil, Eye, Download, Globe, LayoutGrid, Save,
+} from "lucide-react";
+import type { LucideProps } from "lucide-react";
 
-interface P extends React.SVGProps<SVGSVGElement> { size?: number }
+const wrap = (Icon: React.FC<LucideProps>) => {
+  const Wrapped = ({ size = 20, ...p }: LucideProps) => (
+    <Icon size={size} strokeWidth={1.75} {...p} />
+  );
+  return Wrapped;
+};
 
-const base = (size = 20): React.SVGProps<SVGSVGElement> => ({
-  width: size, height: size, viewBox: "0 0 24 24", fill: "none",
-  stroke: "currentColor", strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round",
-});
+export const IconChat = wrap(MessageSquare);
+export const IconLibrary = wrap(Library);
+export const IconNote = wrap(FileText);
+export const IconSearch = wrap(Search);
+export const IconSettings = wrap(Settings);
+export const IconPlus = wrap(Plus);
+export const IconSend = wrap(Send);
+export const IconBook = wrap(BookOpen);
+export const IconFile = wrap(FileIconLucide);
+export const IconUpload = wrap(Upload);
+export const IconTrash = wrap(Trash2);
+export const IconTool = wrap(Wrench);
+export const IconSource = wrap(Music2);
+export const IconCheck = wrap(Check);
+export const IconAlert = wrap(AlertCircle);
+export const IconSpinner = wrap(Loader2);
+export const IconCopy = wrap(Copy);
+export const IconRefresh = wrap(RefreshCw);
+export const IconStop = wrap(Square);
+export const IconAttach = wrap(Paperclip);
+export const IconClose = wrap(X);
+export const IconMenu = wrap(Menu);
+export const IconEdit = wrap(Pencil);
+export const IconEye = wrap(Eye);
+export const IconDownload = wrap(Download);
+export const IconGlobe = wrap(Globe);
+export const IconLayout = wrap(LayoutGrid);
+export const IconSave = wrap(Save);
 
-export const IconChat = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-);
-export const IconLibrary = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M16 6l4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
-);
-export const IconNote = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
-);
-export const IconSearch = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-);
-export const IconSettings = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-);
-export const IconPlus = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-);
-export const IconSend = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
-);
-export const IconBook = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-);
-export const IconFile = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-);
-export const IconUpload = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M12 16V4"/><path d="M5 11l7-7 7 7"/><path d="M5 20h14"/></svg>
-);
-export const IconTrash = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-);
-export const IconTool = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-);
-export const IconSource = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-);
-export const IconCheck = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M20 6L9 17l-5-5"/></svg>
-);
-export const IconAlert = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-);
-export const IconSpinner = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-);
-
-export const IconCopy = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-);
-export const IconRefresh = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
-);
-export const IconStop = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-);
-export const IconAttach = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-);
-export const IconClose = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-);
-export const IconMenu = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-);
-export const IconEdit = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-);
-export const IconEye = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-);
-export const IconDownload = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-);
-
-export const IconGlobe = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><line x1="2" x2="22" y1="12" y2="12"/></svg>
-);
-
-// ---- DeepSeek 品牌图标（来自 simple-icons，品牌色 #5786FE）----
-export const IconLayout = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M3 9h18"/></svg>
-);
-export const IconSave = ({ size, ...p }: P) => (
-  <svg {...base(size)} {...p}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
-);
 export const DEEPSEEK_BLUE = "#5786FE";
 export function IconDeepSeek({ size = 20, ...p }: { size?: number } & React.SVGProps<SVGSVGElement>) {
   return (
