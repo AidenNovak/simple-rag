@@ -9,13 +9,14 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { api, getToken } from "../api.js";
-import { IconSend, IconSpinner, IconTool, IconSource, IconCopy, IconCheck, IconRefresh, IconStop, IconDeepSeek, IconLibrary, IconGlobe } from "../Icons.js";
+import { IconSend, IconSpinner, IconTool, IconSource, IconCopy, IconCheck, IconRefresh, IconStop, IconDeepSeek, IconGlobe } from "../Icons.js";
 import { useToast } from "../components/Toast.js";
-import { DocPreview } from "../components/DocPreview.js";
 import MarkdownRender, { TextNode, type NodeComponentProps } from "markstream-react";
 import "markstream-react/index.css";
 import "katex/dist/katex.min.css";
 import { useWorkspace } from "./WorkspaceStore.js";
+import { ScopeDropdown } from "./ScopeDropdown.js";
+import { FilePeekPanel } from "./FilePeekPanel.js";
 
 const INLINE_CITE_RE = /\[(\d{1,3})\]/;
 function CitationTextNode(props: NodeComponentProps<{ type: "text"; content: string; center?: boolean }>) {
@@ -65,6 +66,14 @@ export function ChatPane({ chatModel }: Props) {
   const [contextTokens, setContextTokens] = useState<number | null>(null);
   const [allDocs, setAllDocs] = useState<any[]>([]);
   const [scopeMenuOpen, setScopeMenuOpen] = useState(false);
+  const scopeBtnRef = useRef<HTMLDivElement>(null);
+  // 点击外部关闭 scope 下拉（portal 在 body，需要全局监听）
+  useEffect(() => {
+    if (!scopeMenuOpen) return;
+    const close = () => setScopeMenuOpen(false);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [scopeMenuOpen]);
   const [pinnedSelection, setPinnedSelection] = useState<string | null>(null);
   const [webSearch, setWebSearch] = useState<boolean>(() => {
     try { return localStorage.getItem("kb.webSearch") === "1"; } catch { return false; }
@@ -303,30 +312,18 @@ export function ChatPane({ chatModel }: Props) {
       <div className="ws-chat-header">
         <div className="row" style={{ gap: 10, flex: 1 }}>
           {allDocs.length > 0 && (
-            <div className="model-switcher">
-              <button className="scope-badge" onClick={() => setScopeMenuOpen((v) => !v)}>
-                <IconLibrary size={13} />
-                {state.scopeDocIds === null ? "全部文档" : `${state.scopeDocIds.length} 篇`}
-                <span style={{ fontSize: 10, opacity: 0.6 }}>▼</span>
-              </button>
-              {scopeMenuOpen && (
-                <div className="model-dropdown" style={{ minWidth: 240 }}>
-                  <div style={{ padding: "8px 12px", fontSize: 12, color: "var(--text-muted)" }}>选择本会话检索的文档</div>
-                  {allDocs.map((d) => {
-                    const checked = state.scopeDocIds === null || state.scopeDocIds.includes(d.id);
-                    return (
-                      <label key={d.id} className="scope-item" onClick={(e) => { e.stopPropagation(); toggleDocInScope(d.id); }}>
-                        <input type="checkbox" checked={checked} readOnly style={{ cursor: "pointer" }} />
-                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.title}</span>
-                      </label>
-                    );
-                  })}
-                  <div className="scope-actions">
-                    <button className="btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }} onClick={(e) => { e.stopPropagation(); dispatch({ type: "SET_SCOPE", payload: null }); if (activeConvo) api.setConversationScope(activeConvo, null).catch(()=>{}); }}>全选</button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <ScopeDropdown
+              anchorRef={scopeBtnRef}
+              open={scopeMenuOpen}
+              onToggle={() => setScopeMenuOpen((v) => !v)}
+              docs={allDocs}
+              scopeDocIds={state.scopeDocIds}
+              onToggleDoc={toggleDocInScope}
+              onSelectAll={() => {
+                dispatch({ type: "SET_SCOPE", payload: null });
+                if (activeConvo) api.setConversationScope(activeConvo, null).catch(() => {});
+              }}
+            />
           )}
           {chatModel && (
             <div className="row muted" style={{ fontSize: 12, gap: 4 }}>
@@ -462,7 +459,7 @@ export function ChatPane({ chatModel }: Props) {
         </div>
       </div>
 
-      <DocPreview docId={previewDoc} onClose={() => setPreviewDoc(null)} />
+      <FilePeekPanel docId={previewDoc} onClose={() => setPreviewDoc(null)} />
     </div>
   );
 }
