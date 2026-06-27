@@ -1,0 +1,15 @@
+/* web/src/theme/motion.css — duration / ease / keyframes */
+@keyframes kb-fade-in-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.kb-animate-in {
+  animation: kb-fade-in-up var(--duration-normal) var(--ease-out) both;
+}
+.ws-side-peek-panel {
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .kb-animate-in { animation: none; }
+  .ws-side-peek-panel { transition: none; }
+}

@@ -50,6 +50,43 @@
   --link: var(--accent-amber);
   --cite-bg: rgba(180, 83, 9, 0.1);
   --cite-hover: rgba(180, 83, 9, 0.18);
+
+  /* spacing (4pt grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+
+  /* typography sizes (typography.css) */
+  --text-caption-size: 11px;
+  --text-caption-lh: 1.35;
+  --text-caption-tracking: 0.06em;
+  --text-body-size: 14px;
+  --text-body-lh: 1.55;
+  --text-title-size: 15px;
+  --text-title-lh: 1.3;
+  --text-title-tracking: -0.02em;
+  --text-prose-size: 15px;
+  --text-prose-lh: 1.75;
+
+  /* status (替代 emoji) */
+  --status-pending: #B45309;
+  --status-pending-bg: rgba(180, 83, 9, 0.12);
+  --status-ready: #16a34a;
+  --status-ready-bg: rgba(22, 163, 74, 0.12);
+  --status-failed: #DC2626;
+  --status-failed-bg: rgba(220, 38, 38, 0.12);
+
+  /* radius + z */
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --z-dropdown: 5000;
+
+  /* motion */
+  --duration-fast: 150ms;
+  --duration-normal: 180ms;
+  --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 /* Dark：保留现有 ChatGPT 灰阶（从 styles.css 迁移） */
@@ -99,4 +136,35 @@
   --link: #5786FE;
   --cite-bg: rgba(87, 134, 254, 0.12);
   --cite-hover: rgba(87, 134, 254, 0.26);
+
+  /* spacing / typography sizes / radius / z / motion（与 light 同值） */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --text-caption-size: 11px;
+  --text-caption-lh: 1.35;
+  --text-caption-tracking: 0.06em;
+  --text-body-size: 14px;
+  --text-body-lh: 1.55;
+  --text-title-size: 15px;
+  --text-title-lh: 1.3;
+  --text-title-tracking: -0.02em;
+  --text-prose-size: 15px;
+  --text-prose-lh: 1.75;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --z-dropdown: 5000;
+  --duration-fast: 150ms;
+  --duration-normal: 180ms;
+  --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* status — dark 半透明 */
+  --status-pending: #F28C2E;
+  --status-pending-bg: rgba(242, 140, 46, 0.16);
+  --status-ready: #4ade80;
+  --status-ready-bg: rgba(74, 222, 128, 0.16);
+  --status-failed: #f87171;
+  --status-failed-bg: rgba(248, 113, 113, 0.16);
 }

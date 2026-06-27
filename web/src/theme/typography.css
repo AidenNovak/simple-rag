@@ -1,0 +1,22 @@
+/* web/src/theme/typography.css — Apple 层级 utility classes（替代散落 fontSize） */
+.text-caption {
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-lh);
+  letter-spacing: var(--text-caption-tracking);
+  color: var(--text-muted);
+}
+.text-body { font-size: var(--text-body-size); line-height: var(--text-body-lh); }
+.text-title {
+  font-size: var(--text-title-size);
+  line-height: var(--text-title-lh);
+  letter-spacing: var(--text-title-tracking);
+  font-weight: 600;
+  color: var(--text);
+}
+.text-prose { font-size: var(--text-prose-size); line-height: var(--text-prose-lh); }
+
+/* spacing utilities（仅 workspace + ui 层使用） */
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }

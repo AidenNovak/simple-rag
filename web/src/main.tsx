@@ -4,6 +4,8 @@ import App from "./App.js";
 import { ToastProvider } from "./components/Toast.js";
 import { applyTheme, getStoredTheme } from "./theme/useTheme.js";
 import "./theme/tokens.css";
+import "./theme/typography.css";
+import "./theme/motion.css";
 import "./styles.css";
 
 // boot 前应用主题，避免首屏闪烁（TB1）
