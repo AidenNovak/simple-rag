@@ -4,6 +4,7 @@ import { useWorkspace } from "./WorkspaceStore.js";
 import { IconNote, IconFile, IconTrash, IconUpload } from "../Icons.js";
 import { useToast } from "../components/Toast.js";
 import { SidebarSection } from "./SidebarSection.js";
+import { Badge } from "../ui/index.js";
 
 interface DocRow {
   id: string;
@@ -94,7 +95,11 @@ export function FileTree() {
     >
       <span className="ws-tree-icon">{d.kind === "note" ? <IconNote size={14} /> : <IconFile size={14} />}</span>
       <span className="ws-tree-label">{d.title}</span>
-      {d.status !== "ready" && <span className="ws-tree-status" title={d.status}>{d.status === "failed" ? "⚠" : "⏳"}</span>}
+      {d.status !== "ready" && (
+        <Badge variant={d.status === "failed" ? "failed" : "pending"} className="ws-tree-status">
+          {d.status === "failed" ? "失败" : "处理中"}
+        </Badge>
+      )}
       <button className="ws-tree-del" title="删除" onClick={(e) => { e.stopPropagation(); del(d); }}><IconTrash size={12} /></button>
     </div>
   );

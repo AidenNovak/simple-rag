@@ -46,4 +46,11 @@ describe("FileTree", () => {
     await user.click(screen.getByRole("button", { name: "新建对话" }));
     expect(document.querySelector(".ws-tree-row.active-convo")).toBeNull();
   });
+
+  it("UV1: shows Badge for pending note, not emoji", async () => {
+    render(<WorkspaceProvider><FileTree /></WorkspaceProvider>);
+    expect(await screen.findByText("处理中")).toBeInTheDocument();
+    expect(screen.queryByText("⏳")).not.toBeInTheDocument();
+    expect(screen.queryByText("⚠")).not.toBeInTheDocument();
+  });
 });
