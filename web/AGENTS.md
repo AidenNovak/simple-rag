@@ -180,3 +180,24 @@
 | `ContextBar` 模型窗口 | `config` 默认模型 + `client.ts` resolveChatModel |
 | `normalizeMath` 改逻辑 | 三处同步：Chat / NotePanel / DocPreview |
 | 品牌色改色 | 全局搜 `#5786FE` 替换 |
+
+---
+
+## 允许的轻量 UI primitive（Design System v2 例外声明）
+
+> 上文「无 UI 库」指**无重型组件库**（Ant / MUI / Chakra / 整包 Tailwind）。
+> v2 后**允许并鼓励**以下小而精的 primitive：
+
+| 包 | 用途 | 落点 |
+|----|------|------|
+| `@radix-ui/react-dropdown-menu` | a11y / focus trap / portal / 键盘导航 | `web/src/ui/dropdown-menu.tsx` |
+| `@radix-ui/react-dialog` | modal overlay（未来 FilePeek 等） | `web/src/ui/dialog.tsx`（预留） |
+| `cmdk` | ⌘K 命令面板（↑↓ / Enter / Esc） | `web/src/workspace/CommandPalette.tsx` |
+| `lucide-react` | 图标一致性 | `web/src/Icons.tsx`（再导出，保持 `Icon*` 名） |
+
+**规则：**
+- 新增 primitive 须放入 `web/src/ui/`，样式引用 `theme/` token（CSS var），**禁止内联 hex**。
+- **禁止** shadcn CLI、整包 Tailwind 迁移、Ant / MUI / Chakra / Arco。
+- 图标统一经 `Icons.tsx` 再导出，调用方保持 `import { IconXxx } from "../Icons.js"` 不变。
+- 状态指示统一 `<Badge variant=...>`（`web/src/ui/badge.tsx`），**禁止 emoji**。
+
