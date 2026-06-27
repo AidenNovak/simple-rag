@@ -69,6 +69,8 @@ export function ChatPane({ chatModel }: Props) {
   const [expandedTool, setExpandedTool] = useState<string | null>(null);
   const [contextTokens, setContextTokens] = useState<number | null>(null);
   const [allDocs, setAllDocs] = useState<any[]>([]);
+  const [noteTotal, setNoteTotal] = useState<number | null>(null);
+  const [allNotes, setAllNotes] = useState<{ id: string; title: string }[]>([]);
   const [scopeMenuOpen, setScopeMenuOpen] = useState(false);
   const scopeBtnRef = useRef<HTMLDivElement>(null);
   // 点击外部关闭 scope 下拉（portal 在 body，需要全局监听）
@@ -113,8 +115,13 @@ export function ChatPane({ chatModel }: Props) {
 
   useEffect(() => {
     api.listDocs().then((r) => {
-      const ready = (r.documents || []).filter((d: any) => d.status === "ready");
-      setReadyCount(ready.length); setAllDocs(ready);
+      const docs = r.documents || [];
+      const ready = docs.filter((d: any) => d.status === "ready");
+      const notes = docs.filter((d: any) => d.kind === "note");
+      setReadyCount(ready.length);
+      setNoteTotal(notes.length);
+      setAllDocs(ready);
+      setAllNotes(notes.map((d: any) => ({ id: d.id, title: d.title })));
     }).catch(() => {});
   }, [messages.length]);
 
@@ -308,10 +315,10 @@ export function ChatPane({ chatModel }: Props) {
   };
 
   const isEmpty = messages.length === 0;
-  const noDocs = readyCount !== null && readyCount === 0;
-  const refNotes = allDocs
-    .filter((d: any) => d.kind === "note" && d.status === "ready")
-    .map((d: any) => ({ id: d.id, title: d.title }));
+  // noDocs：仅当 listDocs 总数为 0 才禁用发送（有 pending 笔记可问）
+  const noDocs = noteTotal !== null && noteTotal === 0 && allDocs.length === 0;
+  // 参考笔记：全部 note（含 pending），非仅 ready
+  const refNotes = allNotes;
   const lastMsg = messages[messages.length - 1];
   const isThinking = busy && lastMsg?.role === "assistant" && !lastMsg.content;
 
@@ -338,7 +345,11 @@ export function ChatPane({ chatModel }: Props) {
               <IconDeepSeek size={12} /> {chatModel}
             </div>
           )}
-          {readyCount !== null && <span className="muted" style={{ fontSize: 12 }}>{readyCount} 篇</span>}
+          {noteTotal !== null && readyCount !== null && (
+            <span className="muted ws-doc-count" style={{ fontSize: 12 }}>
+              {noteTotal === readyCount ? `${readyCount} 篇可检索` : `${noteTotal} 笔记 · ${readyCount} 可检索`}
+            </span>
+          )}
         </div>
       </div>
 
