@@ -152,6 +152,54 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; back
 .chat-empty h1 { font-size: 28px; font-weight: 500; margin-bottom: 32px; }
 .chat-empty .hint { color: var(--text-muted); font-size: 14px; }
 
+/* ===== 对话区滚动渐隐（借鉴 OpenKnowledge scroll-fade mask）===== */
+.chat-scroll {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 14px, black calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, black 14px, black calc(100% - 14px), transparent 100%);
+}
+
+/* ===== agent 身份与在场感（借鉴 OpenKnowledge agent presence）=====
+   品牌色用 DeepSeek 蓝 #5786FE（我们唯一保留的"图标色"），其余配色不动。
+   agent-breathing：助手"正在写"时角色点缓慢呼吸，2.4s 循环。 */
+@keyframes agent-breathing {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(87,134,254,0.18); }
+  50%      { box-shadow: 0 0 0 5px rgba(87,134,254,0.04); }
+}
+.agent-role { display: inline-flex; align-items: center; gap: 6px; }
+.agent-avatar {
+  width: 20px; height: 20px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(87,134,254,0.12); color: #5786FE;
+  flex-shrink: 0;
+}
+.agent-avatar.live { animation: agent-breathing 2.4s ease-in-out infinite; }
+.msg.assistant.loading .agent-role .role-name { color: #5786FE; }
+
+/* ===== agent-flash：助手流式输出时的左侧 accent bar =====
+   借鉴 OpenKnowledge 的 inset box-shadow accent bar 技术（非独立元素），
+   配色用 DeepSeek 蓝。仅在 streaming 进行时触发，结束即消退。 */
+@keyframes agent-flash {
+  0%   { box-shadow: inset 3px 0 0 transparent; }
+  15%  { box-shadow: inset 3px 0 0 #5786FE; }
+  70%  { box-shadow: inset 3px 0 0 #5786FE; }
+  100% { box-shadow: inset 3px 0 0 transparent; }
+}
+.msg.assistant .bubble.agent-flashing {
+  animation: agent-flash 1.6s cubic-bezier(0.23,1,0.32,1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .agent-avatar.live { animation: none; background: rgba(87,134,254,0.16); }
+  .msg.assistant .bubble.agent-flashing { animation: none; box-shadow: inset 3px 0 0 #5786FE; }
+}
+
+/* ===== 空状态引导建议（借鉴 OpenKnowledge rotating suggestion）===== */
+.empty-suggestions { width: 100%; max-width: var(--maxw-chat); margin-top: 20px; }
+.empty-suggestions-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;
+}
+.empty-suggestions-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
 .msg { margin-bottom: 28px; }
 .msg .role-label {
   font-size: 13px; font-weight: 600; color: var(--text-secondary);
@@ -327,7 +375,10 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; back
   pointer-events: auto;
   transition: border-color 0.15s;
 }
-.composer:focus-within { border-color: var(--accent-amber); }
+.composer:focus-within {
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 0 3px rgba(180,83,9,0.12);
+}
 .composer textarea {
   flex: 1; max-height: 200px; resize: none;
   padding: 10px 0; line-height: 1.5;

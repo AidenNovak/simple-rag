@@ -81,6 +81,16 @@ export function ChatPane({ chatModel }: Props) {
     setWebSearch((v) => { const next = !v; try { localStorage.setItem("kb.webSearch", next ? "1" : "0"); } catch {}; toast("info", next ? "已开启网络搜索" : "已关闭网络搜索"); return next; });
   };
 
+  // ===== 空状态引导建议（借鉴 OpenKnowledge rotating suggestion）=====
+  // 选中笔记后，空状态展示 3 条可点击的提问建议。
+  const PLACEHOLDER_SUGGESTIONS = [
+    "总结这篇笔记的三个要点",
+    "对比一下这两种方案的优劣",
+    "帮我追加深度分析的段落",
+    "我之前问过关于这个的内容吗？",
+    "把这段对话沉淀成笔记",
+  ];
+
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -352,13 +362,28 @@ export function ChatPane({ chatModel }: Props) {
               selectedIds={state.contextDocIds}
               onToggle={(id, title) => dispatch({ type: "TOGGLE_CONTEXT_DOC", payload: { id, title } })}
             />
+            {!noDocs && state.contextDocIds.length > 0 && (
+              <div className="empty-suggestions">
+                <div className="empty-suggestions-label">可以问我</div>
+                <div className="empty-suggestions-row">
+                  {PLACEHOLDER_SUGGESTIONS.slice(0, 3).map((s) => (
+                    <button key={s} className="followup-chip" onClick={() => { setInput(s); taRef.current?.focus(); }}>{s}</button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="chat-stream">
             {messages.map((m, i) => (
-              <div key={i} className={`msg ${m.role}`}>
+              <div key={i} className={`msg ${m.role}${m.loading ? " loading" : ""}`}>
                 <div className="role-label">
-                  {m.role === "user" ? "你" : (<span className="row" style={{ gap: 5 }}><IconDeepSeek size={13} /> 知识库助手</span>)}
+                  {m.role === "user" ? "你" : (
+                    <span className="agent-role">
+                      <span className={`agent-avatar${m.loading ? " live" : ""}`}><IconDeepSeek size={13} /></span>
+                      <span className="role-name">知识库助手</span>
+                    </span>
+                  )}
                 </div>
                 {m.role === "assistant" && (() => {
                   let acts = m.activities;
@@ -421,7 +446,7 @@ export function ChatPane({ chatModel }: Props) {
                     </details>
                   );
                 })()}
-                <div className={`bubble ${m.loading && !m.content ? "typing-cursor" : ""}`}>
+                <div className={`bubble ${m.loading && !m.content ? "typing-cursor" : ""}${m.loading && m.content ? " agent-flashing" : ""}`}>
                   {m.role === "assistant" ? (
                     <MarkdownRender content={normalizeMath(m.content)} final={!m.loading} fade={false} dark={markstreamDark} customComponents={MARKSTREAM_CUSTOM} />
                   ) : m.content}
