@@ -153,8 +153,8 @@
 .ws-context-clear { color: var(--text-muted); font-size: 14px; padding: 0 4px; }
 
 /* ⌘K CommandPalette */
-.cmdk-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh; }
-.cmdk-panel { width: 560px; max-width: 90vw; background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: 12px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+.cmdk-overlay { position: fixed; inset: 0; background: rgba(26, 22, 18, 0.35); z-index: 200; display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh; }
+.cmdk-panel { width: 560px; max-width: 90vw; background: var(--paper-craft); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 16px 48px rgba(26, 22, 18, 0.12); }
 .cmdk-input-wrap { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
 .cmdk-input { flex: 1; font-size: 15px; }
 .cmdk-results { max-height: 360px; overflow-y: auto; }
