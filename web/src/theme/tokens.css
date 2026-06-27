@@ -1,0 +1,102 @@
+/* web/src/theme/tokens.css — Light 默认：暖色纸面 */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --paper-base: #F7F2EA;
+  --paper-sidebar: #EDE6DC;
+  --paper-craft: #FFFCF7;
+  --paper-topbar: #FFFCF7;
+
+  --ink: #1A1612;
+  --ink-secondary: #5C534A;
+  --ink-muted: #8A8178;
+
+  --accent-amber: #B45309;
+  --accent-bright: #F28C2E;
+  --accent-text-on-amber: #FFFCF7;
+
+  --border: rgba(26, 22, 18, 0.08);
+  --border-strong: rgba(26, 22, 18, 0.14);
+  --shadow-soft: 0 1px 3px rgba(26, 22, 18, 0.06);
+  --shadow-peek: -4px 0 24px rgba(26, 22, 18, 0.08);
+
+  /* 兼容现有组件变量名 */
+  --bg-main: var(--paper-base);
+  --bg-sidebar: var(--paper-sidebar);
+  --bg-elevated: var(--paper-craft);
+  --bg-hover: rgba(26, 22, 18, 0.05);
+  --bg-input: var(--paper-craft);
+  --border-light: var(--border-strong);
+  --text: var(--ink);
+  --text-secondary: var(--ink-secondary);
+  --text-muted: var(--ink-muted);
+  --accent: var(--accent-amber);
+  --accent-text: var(--accent-text-on-amber);
+  --user-bubble: rgba(26, 22, 18, 0.06);
+  --danger: #DC2626;
+  --radius: 10px;
+  --radius-pill: 22px;
+  --maxw-chat: 768px;
+  --maxw-panel: 880px;
+  --sidebar-w: 260px;
+
+  --ws-left-bg: var(--paper-sidebar);
+  --ws-center-bg: var(--paper-craft);
+  --ws-right-bg: var(--paper-base);
+  --ws-resizer-hover: rgba(180, 83, 9, 0.18);
+
+  --selection-bar-bg: rgba(242, 140, 46, 0.12);
+  --link: var(--accent-amber);
+  --cite-bg: rgba(180, 83, 9, 0.1);
+  --cite-hover: rgba(180, 83, 9, 0.18);
+}
+
+/* Dark：保留现有 ChatGPT 灰阶（从 styles.css 迁移） */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --paper-base: #212121;
+  --paper-sidebar: #171717;
+  --paper-craft: #212121;
+  --paper-topbar: #171717;
+
+  --ink: #ececec;
+  --ink-secondary: #b4b4b4;
+  --ink-muted: #8e8ea0;
+
+  --accent-amber: #ececec;
+  --accent-bright: #5786FE;
+  --accent-text-on-amber: #212121;
+
+  --border: #2f2f2f;
+  --border-strong: #424242;
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-peek: -8px 0 24px rgba(0, 0, 0, 0.35);
+
+  --bg-main: #212121;
+  --bg-sidebar: #171717;
+  --bg-elevated: #2f2f2f;
+  --bg-hover: #2a2a2a;
+  --bg-input: #2f2f2f;
+  --border-light: var(--border-strong);
+  --text: #ececec;
+  --text-secondary: #b4b4b4;
+  --text-muted: #8e8ea0;
+  --accent: #ececec;
+  --accent-text: #212121;
+  --user-bubble: #2f2f2f;
+  --danger: #ef4146;
+  --radius: 12px;
+  --radius-pill: 28px;
+
+  --ws-left-bg: var(--bg-sidebar);
+  --ws-center-bg: var(--bg-main);
+  --ws-right-bg: var(--bg-main);
+  --ws-resizer-hover: rgba(87, 134, 254, 0.2);
+
+  --selection-bar-bg: rgba(87, 134, 254, 0.08);
+  --link: #5786FE;
+  --cite-bg: rgba(87, 134, 254, 0.12);
+  --cite-hover: rgba(87, 134, 254, 0.26);
+}
