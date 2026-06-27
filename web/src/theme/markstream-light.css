@@ -1,1 +1,54 @@
-/* placeholder — filled in Task 5 */
+/* web/src/theme/markstream-light.css — 仅 light 生效 */
+[data-theme="light"] .markstream-react,
+:root:not([data-theme="dark"]) .markstream-react {
+  --background: 255 252 247 !important;
+  --foreground: 26 22 18 !important;
+  color: var(--ink) !important;
+  background: transparent !important;
+}
+[data-theme="light"] .markstream-react .inline-code,
+:root:not([data-theme="dark"]) .markstream-react .inline-code {
+  background: rgba(26, 22, 18, 0.06) !important;
+  color: var(--ink) !important;
+}
+[data-theme="light"] .markstream-react blockquote,
+:root:not([data-theme="dark"]) .markstream-react blockquote {
+  border-left: 3px solid var(--accent-bright) !important;
+  color: var(--ink-secondary) !important;
+  background: rgba(242, 140, 46, 0.06) !important;
+}
+[data-theme="light"] .markstream-react pre,
+:root:not([data-theme="dark"]) .markstream-react pre {
+  background: rgba(26, 22, 18, 0.04) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+}
+[data-theme="light"] .markstream-react pre code,
+:root:not([data-theme="dark"]) .markstream-react pre code {
+  color: var(--ink) !important;
+}
+[data-theme="light"] .markstream-react a,
+:root:not([data-theme="dark"]) .markstream-react a {
+  color: var(--link) !important;
+}
+[data-theme="light"] .markstream-react h1,
+[data-theme="light"] .markstream-react h2,
+[data-theme="light"] .markstream-react h3,
+[data-theme="light"] .markstream-react p,
+[data-theme="light"] .markstream-react li,
+:root:not([data-theme="dark"]) .markstream-react h1,
+:root:not([data-theme="dark"]) .markstream-react h2,
+:root:not([data-theme="dark"]) .markstream-react h3,
+:root:not([data-theme="dark"]) .markstream-react p,
+:root:not([data-theme="dark"]) .markstream-react li {
+  color: var(--ink) !important;
+}
+[data-theme="light"] .markstream-react .inline-cite,
+:root:not([data-theme="dark"]) .markstream-react .inline-cite {
+  background: var(--cite-bg) !important;
+  color: var(--accent-amber) !important;
+}
+[data-theme="light"] .markstream-react .inline-cite:hover,
+:root:not([data-theme="dark"]) .markstream-react .inline-cite:hover {
+  background: var(--cite-hover) !important;
+}

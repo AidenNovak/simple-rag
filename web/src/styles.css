@@ -252,35 +252,7 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; back
 .cite-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
 .cite-label svg { color: var(--text-secondary); }
 
-/* markstream-react 暗色主题覆盖 */
-.markstream-react {
-  --background: 33 33 33 !important;
-  --foreground: 236 233 236 !important;
-  color: var(--text) !important;
-  background: transparent !important;
-}
-.markstream-react .inline-code {
-  background: #3a3a3c !important; color: #e6e9ef !important;
-}
-.markstream-react table { border-color: #3a3a3c !important; }
-.markstream-react th { background: #2a2a2c !important; color: #e6e9ef !important; }
-.markstream-react td { border-color: #3a3a3c !important; color: #e6e9ef !important; }
-.markstream-react blockquote {
-  border-left-color: #5786FE !important; color: #b4b4b4 !important;
-  background: rgba(87,134,254,0.05) !important;
-}
-/* KaTeX 暗色：继承文字颜色，不白底 */
-.markstream-react .katex { color: inherit !important; }
-.markstream-react .katex-display {
-  background: rgba(255,255,255,0.03) !important;
-  border-radius: 8px; padding: 12px 16px; margin: 12px 0;
-}
-.markstream-react .katex-display .katex { color: #e6e9ef !important; }
-/* 代码块暗色 */
-.markstream-react pre { background: #1a1a1c !important; }
-.markstream-react pre code { color: #e2e8f0 !important; background: transparent !important; }
-/* 链接 */
-.markstream-react a { color: #5786FE !important; }
+/* markstream-react 覆盖已迁至 theme/markstream-light.css 和 theme/markstream-dark.css */
 /* 列表标记 */
 .markstream-react ul, .markstream-react ol { color: var(--text) !important; }
 .markstream-react li { color: var(--text) !important; }

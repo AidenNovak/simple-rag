@@ -1,1 +1,29 @@
-/* placeholder — filled in Task 5 */
+/* web/src/theme/markstream-dark.css — 仅 dark 生效（从 styles.css 迁出） */
+[data-theme="dark"] .markstream-react {
+  --background: 33 33 33 !important;
+  --foreground: 236 233 236 !important;
+  color: var(--text) !important;
+  background: transparent !important;
+}
+[data-theme="dark"] .markstream-react .inline-code {
+  background: #3a3a3c !important; color: #e6e9ef !important;
+}
+[data-theme="dark"] .markstream-react table { border-color: #3a3a3c !important; }
+[data-theme="dark"] .markstream-react th { background: #2a2a2c !important; color: #e6e9ef !important; }
+[data-theme="dark"] .markstream-react td { border-color: #3a3a3c !important; color: #e6e9ef !important; }
+[data-theme="dark"] .markstream-react blockquote {
+  border-left-color: #5786FE !important; color: #b4b4b4 !important;
+  background: rgba(87,134,254,0.05) !important;
+}
+/* KaTeX 暗色：继承文字颜色，不白底 */
+[data-theme="dark"] .markstream-react .katex { color: inherit !important; }
+[data-theme="dark"] .markstream-react .katex-display {
+  background: rgba(255,255,255,0.03) !important;
+  border-radius: 8px; padding: 12px 16px; margin: 12px 0;
+}
+[data-theme="dark"] .markstream-react .katex-display .katex { color: #e6e9ef !important; }
+/* 代码块暗色 */
+[data-theme="dark"] .markstream-react pre { background: #1a1a1c !important; }
+[data-theme="dark"] .markstream-react pre code { color: #e2e8f0 !important; background: transparent !important; }
+/* 链接 */
+[data-theme="dark"] .markstream-react a { color: #5786FE !important; }
