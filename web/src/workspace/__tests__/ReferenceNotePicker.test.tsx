@@ -9,18 +9,25 @@ const NOTES = [
 ];
 
 describe("ReferenceNotePicker", () => {
-  it("renders note list and calls onSelect", async () => {
+  it("renders note list and toggles selection", async () => {
     const user = userEvent.setup();
-    const onSelect = vi.fn();
-    render(<ReferenceNotePicker notes={NOTES} selectedId="n1" onSelect={onSelect} />);
+    const onToggle = vi.fn();
+    render(<ReferenceNotePicker notes={NOTES} selectedIds={["n1"]} onToggle={onToggle} />);
     expect(screen.getByTestId("ref-note-picker")).toBeInTheDocument();
     expect(screen.getByText("选择参考笔记")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /RAG 架构核心要点/ }));
-    expect(onSelect).toHaveBeenCalledWith("n2", "RAG 架构核心要点");
+    expect(onToggle).toHaveBeenCalledWith("n2", "RAG 架构核心要点");
   });
 
   it("shows empty hint when no notes", () => {
-    render(<ReferenceNotePicker notes={[]} selectedId={null} onSelect={() => {}} />);
+    render(<ReferenceNotePicker notes={[]} selectedIds={[]} onToggle={() => {}} />);
     expect(screen.getByText(/新建笔记/)).toBeInTheDocument();
+  });
+
+  it("marks selected rows as checked", () => {
+    render(<ReferenceNotePicker notes={NOTES} selectedIds={["n1", "n2"]} onToggle={() => {}} />);
+    const rows = screen.getAllByRole("option");
+    expect(rows[0]).toHaveAttribute("aria-selected", "true");
+    expect(rows[1]).toHaveAttribute("aria-selected", "true");
   });
 });

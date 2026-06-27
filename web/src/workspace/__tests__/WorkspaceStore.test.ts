@@ -42,45 +42,69 @@ describe("workspaceReducer", () => {
     expect(JSON.parse(raw!).leftWidth).toBe(300);
   });
 
-  it("SET_CONTEXT_DOC updates context without activeDoc", () => {
+  it("TOGGLE_CONTEXT_DOC adds a context note", () => {
     const s = workspaceReducer(initialWorkspaceState, {
-      type: "SET_CONTEXT_DOC",
+      type: "TOGGLE_CONTEXT_DOC",
       payload: { id: "n9", title: "Ref Note" },
     });
-    expect(s.contextDocId).toBe("n9");
-    expect(s.contextDocTitle).toBe("Ref Note");
+    expect(s.contextDocIds).toEqual(["n9"]);
+    expect(s.contextDocTitles).toEqual({ n9: "Ref Note" });
     expect(s.activeDocId).toBeNull();
   });
 
-  it("SET_ACTIVE_DOC note syncs contextDocId", () => {
+  it("TOGGLE_CONTEXT_DOC removes an already-selected note", () => {
+    const withOne = workspaceReducer(initialWorkspaceState, {
+      type: "TOGGLE_CONTEXT_DOC",
+      payload: { id: "n1", title: "A" },
+    });
+    const s = workspaceReducer(withOne, {
+      type: "TOGGLE_CONTEXT_DOC",
+      payload: { id: "n1", title: "A" },
+    });
+    expect(s.contextDocIds).toEqual([]);
+    expect(s.contextDocTitles).toEqual({});
+  });
+
+  it("TOGGLE_CONTEXT_DOC keeps multiple selections", () => {
+    const s1 = workspaceReducer(initialWorkspaceState, {
+      type: "TOGGLE_CONTEXT_DOC", payload: { id: "n1", title: "A" },
+    });
+    const s2 = workspaceReducer(s1, {
+      type: "TOGGLE_CONTEXT_DOC", payload: { id: "n2", title: "B" },
+    });
+    expect(s2.contextDocIds).toEqual(["n1", "n2"]);
+    expect(s2.contextDocTitles).toEqual({ n1: "A", n2: "B" });
+  });
+
+  it("SET_ACTIVE_DOC note syncs contextDocIds", () => {
     const s = workspaceReducer(initialWorkspaceState, {
       type: "SET_ACTIVE_DOC",
       payload: { id: "d2", title: "T", content: "c", kind: "note" },
     });
-    expect(s.contextDocId).toBe("d2");
-    expect(s.contextDocTitle).toBe("T");
+    expect(s.contextDocIds).toEqual(["d2"]);
+    expect(s.contextDocTitles).toEqual({ d2: "T" });
   });
 
-  it("SET_ACTIVE_DOC upload does not change contextDocId", () => {
+  it("SET_ACTIVE_DOC upload does not change contextDocIds", () => {
     const withCtx = workspaceReducer(initialWorkspaceState, {
-      type: "SET_CONTEXT_DOC",
+      type: "TOGGLE_CONTEXT_DOC",
       payload: { id: "n1", title: "Keep" },
     });
     const s = workspaceReducer(withCtx, {
       type: "SET_ACTIVE_DOC",
       payload: { id: "f1", title: "File", content: "", kind: "upload" },
     });
-    expect(s.contextDocId).toBe("n1");
+    expect(s.contextDocIds).toEqual(["n1"]);
     expect(s.activeDocId).toBe("f1");
   });
 
   it("CLEAR_CONTEXT_DOC clears context fields", () => {
     const withCtx = workspaceReducer(initialWorkspaceState, {
-      type: "SET_CONTEXT_DOC",
+      type: "TOGGLE_CONTEXT_DOC",
       payload: { id: "n1", title: "X" },
     });
     const s = workspaceReducer(withCtx, { type: "CLEAR_CONTEXT_DOC" });
-    expect(s.contextDocId).toBeNull();
-    expect(s.contextDocTitle).toBeNull();
+    expect(s.contextDocIds).toEqual([]);
+    expect(s.contextDocTitles).toEqual({});
   });
 });

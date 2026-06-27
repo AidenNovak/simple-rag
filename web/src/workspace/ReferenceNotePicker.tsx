@@ -2,12 +2,12 @@ export interface RefNote { id: string; title: string; }
 
 interface Props {
   notes: RefNote[];
-  selectedId: string | null;
-  onSelect: (id: string, title: string) => void;
+  selectedIds: string[];
+  onToggle: (id: string, title: string) => void;
 }
 
-/** 空态参考笔记单选列表：用户无需打开中栏即可选择 AI 参考哪篇笔记。 */
-export function ReferenceNotePicker({ notes, selectedId, onSelect }: Props) {
+/** 空态参考笔记多选列表：勾选后作为 AI 对话上下文（可多选）。 */
+export function ReferenceNotePicker({ notes, selectedIds, onToggle }: Props) {
   if (notes.length === 0) {
     return (
       <div className="ws-ref-picker ws-ref-picker-empty" data-testid="ref-note-picker">
@@ -20,17 +20,17 @@ export function ReferenceNotePicker({ notes, selectedId, onSelect }: Props) {
   return (
     <div className="ws-ref-picker" data-testid="ref-note-picker">
       <h2 className="ws-ref-picker-title">选择参考笔记</h2>
-      <ul className="ws-ref-picker-list" role="listbox" aria-label="参考笔记">
+      <ul className="ws-ref-picker-list" role="listbox" aria-label="参考笔记" aria-multiselectable="true">
         {notes.map((n) => {
-          const active = selectedId === n.id;
+          const checked = selectedIds.includes(n.id);
           return (
-            <li key={n.id} role="option" aria-selected={active}>
+            <li key={n.id} role="option" aria-selected={checked}>
               <button
                 type="button"
-                className={`ws-ref-picker-row${active ? " active" : ""}`}
-                onClick={() => onSelect(n.id, n.title)}
+                className={`ws-ref-picker-row${checked ? " active" : ""}`}
+                onClick={() => onToggle(n.id, n.title)}
               >
-                <span className="ws-ref-picker-dot" aria-hidden>{active ? "●" : "○"}</span>
+                <span className="ws-ref-picker-dot" aria-hidden>{checked ? "☑" : "☐"}</span>
                 <span className="ws-ref-picker-label">{n.title}</span>
               </button>
             </li>

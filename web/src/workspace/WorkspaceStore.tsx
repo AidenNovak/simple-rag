@@ -12,8 +12,8 @@ export interface WorkspaceState {
   scopeDocIds: string[] | null;
   layout: LayoutPrefs;
   pendingPatch: PendingPatch | null;
-  contextDocId: string | null;
-  contextDocTitle: string | null;
+  contextDocIds: string[];
+  contextDocTitles: Record<string, string>;
 }
 
 const DEFAULT_LAYOUT: LayoutPrefs = { leftWidth: 240, rightWidth: 380, leftCollapsed: false };
@@ -29,8 +29,8 @@ export const initialWorkspaceState: WorkspaceState = {
   scopeDocIds: null,
   layout: loadLayout(),
   pendingPatch: null,
-  contextDocId: null,
-  contextDocTitle: null,
+  contextDocIds: [],
+  contextDocTitles: {},
 };
 
 function loadLayout(): LayoutPrefs {
@@ -59,20 +59,23 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       if (action.payload.kind === "note") {
         return {
           ...base,
-          contextDocId: action.payload.id,
-          contextDocTitle: action.payload.title,
+          contextDocIds: [action.payload.id],
+          contextDocTitles: { [action.payload.id]: action.payload.title },
         };
       }
       return base;
     }
-    case "SET_CONTEXT_DOC":
-      return {
-        ...state,
-        contextDocId: action.payload.id,
-        contextDocTitle: action.payload.title,
-      };
+    case "TOGGLE_CONTEXT_DOC": {
+      const { id, title } = action.payload;
+      const has = state.contextDocIds.includes(id);
+      const nextIds = has ? state.contextDocIds.filter((x) => x !== id) : [...state.contextDocIds, id];
+      const nextTitles = { ...state.contextDocTitles };
+      if (has) delete nextTitles[id];
+      else nextTitles[id] = title;
+      return { ...state, contextDocIds: nextIds, contextDocTitles: nextTitles };
+    }
     case "CLEAR_CONTEXT_DOC":
-      return { ...state, contextDocId: null, contextDocTitle: null };
+      return { ...state, contextDocIds: [], contextDocTitles: {} };
     case "SET_DRAFT_TITLE":
       return { ...state, draftTitle: action.payload, dirty: true };
     case "SET_DRAFT_CONTENT":

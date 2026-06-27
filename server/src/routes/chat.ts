@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { authGuard, requireUser, type AuthedRequest } from "../auth/middleware.js";
 import { agentAnswer, agentAnswerStream, generateTitle, generateFollowUps, type ContextNote } from "../rag/agent.js";
 import { getDb, schema } from "../db/client.js";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { ValidationError } from "../errors.js";
 import * as convoService from "../services/conversation.js";
 import { config } from "../config/index.js";
@@ -12,14 +12,14 @@ import { config } from "../config/index.js";
  * 业务逻辑在 ConversationService，路由仅做传输 + 鉴权 + 调 agent。
  */
 
-/** 加载工作台当前打开的笔记作为对话上下文（强制 user_id 隔离，防 IDOR）。 */
-async function loadContextNote(userId: string, docId?: string): Promise<ContextNote | undefined> {
-  if (!docId) return undefined;
+/** 加载工作台选定的多篇参考笔记作为对话上下文（强制 user_id 隔离，防 IDOR）。 */
+async function loadContextNotes(userId: string, docIds?: string[]): Promise<ContextNote[] | undefined> {
+  if (!docIds || docIds.length === 0) return undefined;
   const db = getDb();
-  const [doc] = await db.select().from(schema.documents)
-    .where(and(eq(schema.documents.id, docId), eq(schema.documents.userId, userId))).limit(1);
-  if (!doc) return undefined;
-  return { id: doc.id, title: doc.title, content: doc.contentMd || "" };
+  const docs = await db.select().from(schema.documents)
+    .where(and(inArray(schema.documents.id, docIds), eq(schema.documents.userId, userId)));
+  if (docs.length === 0) return undefined;
+  return docs.map((d) => ({ id: d.id, title: d.title, content: d.contentMd || "" }));
 }
 
 /** 规范化 selection：接受 D2 对象 { docId, text, start?, end? } 或纯字符串，统一返回 text。 */
@@ -38,7 +38,7 @@ export async function chatRoutes(app: FastifyInstance) {
   // ---- 单轮问答 ----
   app.post("/chat/ask", { preHandler: [authGuard] }, async (req: AuthedRequest, reply) => {
     const user = requireUser(req);
-    const body = (req.body || {}) as { question?: string; conversationId?: string; webSearch?: boolean; contextDocId?: string; selection?: unknown };
+    const body = (req.body || {}) as { question?: string; conversationId?: string; webSearch?: boolean; contextDocIds?: string[]; selection?: unknown };
     if (!body.question?.trim()) throw new ValidationError("问题不能为空");
     if (body.question.length > config.tuning.questionMaxLen) throw new ValidationError(`问题过长（上限 ${config.tuning.questionMaxLen} 字符）`);
 
@@ -48,9 +48,9 @@ export async function chatRoutes(app: FastifyInstance) {
       ? (await convoService.getOrCreateConversation(user.id, body.conversationId, body.question)).scopeDocIds
       : null;
     const history = await convoService.loadHistory(user.id, body.conversationId);
-    const contextNote = await loadContextNote(user.id, body.contextDocId);
+    const contextNotes = await loadContextNotes(user.id, body.contextDocIds);
     const selection = normalizeSelection(body.selection);
-    const result = await agentAnswer(user.id, body.question, creds, history, scopeDocIds, body.webSearch === true, contextNote, selection);
+    const result = await agentAnswer(user.id, body.question, creds, history, scopeDocIds, body.webSearch === true, contextNotes, selection);
 
     // 落库（业务逻辑在 service 层）
     const { id: convId, isNew } = await convoService.getOrCreateConversation(user.id, body.conversationId, body.question);
@@ -80,11 +80,11 @@ export async function chatRoutes(app: FastifyInstance) {
   const activeStreams = new Map<string, boolean>();
   app.post("/chat/stream", { preHandler: [authGuard] }, async (req: AuthedRequest, reply) => {
     const user = requireUser(req);
-    const body = (req.body || {}) as { question?: string; conversationId?: string; webSearch?: boolean; contextDocId?: string; selection?: unknown };
+    const body = (req.body || {}) as { question?: string; conversationId?: string; webSearch?: boolean; contextDocIds?: string[]; selection?: unknown };
     if (!body.question?.trim()) throw new ValidationError("问题不能为空");
     if (body.question.length > config.tuning.questionMaxLen) throw new ValidationError(`问题过长（上限 ${config.tuning.questionMaxLen} 字符）`);
     // 工作台上下文：提前加载（并发控制之前，避免误计数）
-    const contextNote = await loadContextNote(user.id, body.contextDocId);
+    const contextNotes = await loadContextNotes(user.id, body.contextDocIds);
     const selection = normalizeSelection(body.selection);
     // 并发控制
     if (activeStreams.get(user.id)) {
@@ -115,7 +115,7 @@ export async function chatRoutes(app: FastifyInstance) {
         ? (await convoService.getOrCreateConversation(user.id, body.conversationId, body.question)).scopeDocIds
         : null;
       const history = await convoService.loadHistory(user.id, body.conversationId);
-      const gen = agentAnswerStream(user.id, body.question, creds, history, scopeDocIds, body.webSearch === true, contextNote, selection);
+      const gen = agentAnswerStream(user.id, body.question, creds, history, scopeDocIds, body.webSearch === true, contextNotes, selection);
       let fullAnswer = "";
       let finalCitations: any[] = [];
       let finalToolCalls: any[] = [];

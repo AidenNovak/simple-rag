@@ -37,5 +37,5 @@ export type WorkspaceAction =
   | { type: "SET_SCOPE"; payload: string[] | null }
   | { type: "SET_LAYOUT"; payload: Partial<LayoutPrefs> }
   | { type: "SET_PENDING_PATCH"; payload: PendingPatch | null }
-  | { type: "SET_CONTEXT_DOC"; payload: { id: string; title: string } }
+  | { type: "TOGGLE_CONTEXT_DOC"; payload: { id: string; title: string } }
   | { type: "CLEAR_CONTEXT_DOC" };

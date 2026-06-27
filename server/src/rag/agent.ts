@@ -152,9 +152,16 @@ export function buildSelectionContext(sel: SelectionContext, docTitle: string): 
   ].join("\n");
 }
 
-/** 把 contextNote + selection 构造为一条注入消息（拼在问题之前，优先级：选区 > 当前笔记 > 全库检索）。 */
-function buildContextNoteMessage(note: ContextNote, selection?: string): string {
-  const head = `<current_note id="${note.id}" title="${note.title}">\n${note.content}\n</current_note>\n用户当前正在编辑此笔记。当用户提到"当前笔记/本文档/这个文件"时即指它。如需修改它，调用 update_note 工具，note_id 为 ${note.id}。`;
+/** 把多篇 contextNotes + selection 构造为一条注入消息（拼在问题之前，优先级：选区 > 参考笔记 > 全库检索）。 */
+function buildContextNotesMessage(notes: ContextNote[], selection?: string): string {
+  const blocks = notes.map((n) =>
+    `<reference_note id="${n.id}" title="${n.title}">\n${n.content}\n</reference_note>`
+  );
+  const ids = notes.map((n) => n.id).join(", ");
+  const head =
+    blocks.length === 1
+      ? `${blocks[0]}\n用户选定了上述笔记作为本问题的参考。当用户提到"当前笔记/本文档"时指它。如需修改它，调用 update_note 工具，note_id 为 ${notes[0].id}。`
+      : `${blocks.join("\n\n")}\n用户选定了上述 ${notes.length} 篇笔记作为本问题的参考（note_id 分别为 ${ids}）。如需修改其中一篇，调用 update_note 工具并指定对应 note_id。`;
   const tail = selection
     ? `\n\n<selection>\n${selection}\n</selection>\n用户选中了上述片段，本条提问针对它。`
     : "";
@@ -168,7 +175,7 @@ export async function agentAnswer(
   history: { role: "user" | "assistant"; content: string }[] = [],
   docIds?: string[] | null,
   enableWebSearch?: boolean,
-  contextNote?: ContextNote,
+  contextNotes?: ContextNote[],
   selection?: string
 ): Promise<AgentResult> {
   const { apiKey } = resolveChatApiKey(creds);
@@ -182,9 +189,9 @@ export async function agentAnswer(
   const turns: HistoryTurn[] = history.map((h) => ({ role: h.role, content: h.content }));
   const ctxBuilt = buildContextMessages(SYSTEM_PROMPT, turns, question, model);
   let messages = ctxBuilt.messages;
-  // 工作台注入：当前笔记全文 + 选区（若提供），插在用户问题之前（问题必为 messages 末尾）
-  if (contextNote) {
-    const inject = buildContextNoteMessage(contextNote, selection);
+  // 工作台注入：参考笔记全文（可多篇）+ 选区（若提供），插在用户问题之前（问题必为 messages 末尾）
+  if (contextNotes && contextNotes.length > 0) {
+    const inject = buildContextNotesMessage(contextNotes, selection);
     const lastIdx = messages.length - 1;
     messages = [...messages.slice(0, lastIdx), { role: "user", content: inject }, messages[lastIdx]];
   }
@@ -504,7 +511,7 @@ export async function* agentAnswerStream(
   history: { role: "user" | "assistant"; content: string }[] = [],
   docIds?: string[] | null,
   enableWebSearch?: boolean,
-  contextNote?: ContextNote,
+  contextNotes?: ContextNote[],
   selection?: string
 ): AsyncGenerator<StreamEvent, void, unknown> {
   const { apiKey } = resolveChatApiKey(creds);
@@ -518,9 +525,9 @@ export async function* agentAnswerStream(
   const turns: HistoryTurn[] = history.map((h) => ({ role: h.role, content: h.content }));
   const ctxBuilt = buildContextMessages(SYSTEM_PROMPT, turns, question, model);
   let messages = ctxBuilt.messages;
-  // 工作台注入：当前笔记全文 + 选区（若提供），插在用户问题之前（问题必为 messages 末尾）
-  if (contextNote) {
-    const inject = buildContextNoteMessage(contextNote, selection);
+  // 工作台注入：参考笔记全文（可多篇）+ 选区（若提供），插在用户问题之前（问题必为 messages 末尾）
+  if (contextNotes && contextNotes.length > 0) {
+    const inject = buildContextNotesMessage(contextNotes, selection);
     const lastIdx = messages.length - 1;
     messages = [...messages.slice(0, lastIdx), { role: "user", content: inject }, messages[lastIdx]];
   }

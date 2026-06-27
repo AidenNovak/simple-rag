@@ -161,9 +161,10 @@ export function ChatPane({ chatModel }: Props) {
 
     try {
       const selText = pinnedSelection || state.selection?.text || undefined;
-      const ctxId = state.contextDocId;
-      const selection = selText && ctxId
-        ? { docId: ctxId, text: selText, start: state.selection?.start, end: state.selection?.end }
+      const ctxIds = state.contextDocIds;
+      const firstCtx = ctxIds[0];
+      const selection = selText && firstCtx
+        ? { docId: firstCtx, text: selText, start: state.selection?.start, end: state.selection?.end }
         : undefined;
       const res = await fetch(`/api/chat/stream`, {
         method: "POST",
@@ -171,7 +172,7 @@ export function ChatPane({ chatModel }: Props) {
         body: JSON.stringify({
           question, conversationId: activeConvo || undefined, webSearch,
           ...(selection ? { selection } : {}),
-          ...(ctxId ? { contextDocId: ctxId } : {}),
+          ...(ctxIds.length > 0 ? { contextDocIds: ctxIds } : {}),
         }),
         signal: ac.signal,
       });
@@ -358,8 +359,8 @@ export function ChatPane({ chatModel }: Props) {
           <div className="chat-empty ws-chat-empty">
             <ReferenceNotePicker
               notes={refNotes}
-              selectedId={state.contextDocId}
-              onSelect={(id, title) => dispatch({ type: "SET_CONTEXT_DOC", payload: { id, title } })}
+              selectedIds={state.contextDocIds}
+              onToggle={(id, title) => dispatch({ type: "TOGGLE_CONTEXT_DOC", payload: { id, title } })}
             />
           </div>
         ) : (
@@ -466,12 +467,12 @@ export function ChatPane({ chatModel }: Props) {
       </div>
 
       <div className="ws-composer-stack" data-testid="composer-stack">
-        {state.contextDocId && state.contextDocTitle && (
+        {state.contextDocIds.length > 0 && (
           <ContextRefBar
-            title={state.contextDocTitle}
-            selectedId={state.contextDocId}
+            selectedIds={state.contextDocIds}
+            titles={state.contextDocTitles}
             notes={refNotes}
-            onSelect={(id, title) => dispatch({ type: "SET_CONTEXT_DOC", payload: { id, title } })}
+            onToggle={(id, title) => dispatch({ type: "TOGGLE_CONTEXT_DOC", payload: { id, title } })}
             onClear={() => dispatch({ type: "CLEAR_CONTEXT_DOC" })}
           />
         )}
@@ -483,9 +484,9 @@ export function ChatPane({ chatModel }: Props) {
           </div>
         )}
         <div className="composer ws-composer">
-          <textarea ref={taRef} rows={1} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(); } }} placeholder={state.contextDocId ? `关于「${state.contextDocTitle}」提问…` : noDocs ? "先新建笔记或上传文档…" : "请先选择参考笔记"} />
+          <textarea ref={taRef} rows={1} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(); } }} placeholder={state.contextDocIds.length > 0 ? `关于选中的 ${state.contextDocIds.length} 篇笔记提问…` : noDocs ? "先新建笔记或上传文档…" : "请先选择参考笔记"} />
           <button className={`tool-toggle ${webSearch ? "on" : ""}`} onClick={toggleWebSearch} title={webSearch ? "网络搜索：开启" : "网络搜索：关闭"} aria-pressed={webSearch}><IconGlobe size={16} /><span>联网</span></button>
-          {busy ? <button className="send-btn stop" onClick={stop} aria-label="停止生成"><IconStop size={18} /></button> : <button className="send-btn" onClick={ask} disabled={!input.trim() || noDocs || !state.contextDocId} aria-label="发送"><IconSend size={18} /></button>}
+          {busy ? <button className="send-btn stop" onClick={stop} aria-label="停止生成"><IconStop size={18} /></button> : <button className="send-btn" onClick={ask} disabled={!input.trim() || noDocs || state.contextDocIds.length === 0} aria-label="发送"><IconSend size={18} /></button>}
         </div>
       </div>
 
