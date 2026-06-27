@@ -7,6 +7,9 @@ import { SelectionContextBar } from "./SelectionContextBar.js";
 import { CraftBody } from "./craft/CraftBody.js";
 import { SourcePeek } from "./craft/SourcePeek.js";
 import { scrollCraftToSnippet } from "./craft/scrollToSnippet.js";
+import { extractToc } from "./craft/extractToc.js";
+import { computeStats } from "./craft/computeStats.js";
+import { TocPanel } from "./TocPanel.js";
 import { IconNote } from "../Icons.js";
 
 type SaveStatus = "saved" | "dirty" | "saving";
@@ -19,11 +22,14 @@ export function EditorPane() {
   const craftRef = useRef<HTMLDivElement>(null);
   const [peekOpen, setPeekOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
+  const toc = extractToc(state.draftContent);
+  const stats = computeStats(state.draftContent);
   const [previewDocId, setPreviewDocId] = useState<string | null>(null);
 
   // 持久化：Title blur 或 SourcePeek autosave 调用
   const persist = useCallback(async (content: string) => {
     if (!state.activeDocId) return;
+    if (!content.trim()) return;
     setSaveStatus("saving");
     try {
       await api.updateNote(state.activeDocId, state.draftTitle, content);
@@ -114,7 +120,7 @@ export function EditorPane() {
           onBlur={() => { if (state.dirty) persist(state.draftContent); }}
           placeholder="笔记标题"
         />
-        <span className="muted" style={{ fontSize: 12 }}>{state.draftContent.length} 字</span>
+        <span className="ws-writing-stats">{stats.words} 字 · {stats.readTimeMin} 分钟 · {stats.paragraphs} 段</span>
         <span className="ws-save-pill" data-status={saveStatus === "dirty" ? "pending" : saveStatus === "saving" ? "saving" : "idle"}>
           {saveStatus === "saving" ? "保存中" : saveStatus === "dirty" ? "未保存" : "已保存"}
         </span>
@@ -128,6 +134,8 @@ export function EditorPane() {
         onPick={onPick}
         scrollContainerRef={craftRef}
       />
+
+      <TocPanel toc={toc} scrollContainerRef={craftRef} />
 
       <SourcePeek
         open={peekOpen}
