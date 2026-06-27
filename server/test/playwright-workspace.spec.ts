@@ -64,7 +64,9 @@ test.describe("kb workspace acceptance", () => {
     await expect(page.getByTestId("file-tree")).toBeVisible({ timeout: 10000 });
     await expect(page.getByTestId("editor-pane")).toBeVisible();
     await expect(page.getByTestId("chat-pane")).toBeVisible();
-    await expect(page.getByRole("banner")).toHaveText(/私人知识库/);
+    await expect(page.getByRole("banner")).toBeVisible();
+    // 品牌 meimaobing 在左栏（非 topbar）
+    await expect(page.getByText("meimaobing")).toBeVisible();
   });
 
   test("V1: no legacy main nav tabs (.nav-item count = 0)", async ({ page }) => {
