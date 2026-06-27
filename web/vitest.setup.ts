@@ -21,3 +21,22 @@ if (typeof window !== "undefined") {
 }
 
 beforeEach(() => ls.clear());
+
+// cmdk（及部分 Radix）依赖 ResizeObserver，jsdom 未实现；注入 no-op polyfill。
+if (typeof globalThis.ResizeObserver === "undefined") {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  Object.defineProperty(globalThis, "ResizeObserver", { value: ResizeObserverStub, configurable: true });
+  Object.defineProperty(window, "ResizeObserver", { value: ResizeObserverStub, configurable: true });
+}
+// Radix Popper 依赖 DOMRect.fromRect / scrollIntoView（jsdom 缺），补 no-op。
+if (typeof (Element.prototype as any).scrollIntoView === "undefined") {
+  (Element.prototype as any).scrollIntoView = () => {};
+}
+if (typeof (DOMRect as any).fromRect === "undefined") {
+  (DOMRect as any).fromRect = ({ x = 0, y = 0, width = 0, height = 0 } = {}) =>
+    ({ x, y, width, height, top: y, left: x, bottom: y + height, right: x + width, toJSON: () => ({}) });
+}

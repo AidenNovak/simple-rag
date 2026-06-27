@@ -41,3 +41,11 @@
   padding: var(--space-2) var(--space-3) var(--space-1);
   color: var(--text-muted);
 }
+
+/* ===== cmdk CommandPalette ===== */
+[cmdk-root] { width: 100%; }
+[cmdk-item][data-selected="true"] {
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+}
+[cmdk-item][data-value=""] { display: none; }
