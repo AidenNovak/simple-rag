@@ -1,73 +1,83 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api.js";
 import { useWorkspace } from "./WorkspaceStore.js";
 import { useToast } from "../components/Toast.js";
 import { DocPreview } from "../components/DocPreview.js";
 import { SelectionContextBar } from "./SelectionContextBar.js";
-import { IconNote, IconSave } from "../Icons.js";
+import { CraftBody } from "./craft/CraftBody.js";
+import { SourcePeek } from "./craft/SourcePeek.js";
+import { scrollCraftToSnippet } from "./craft/scrollToSnippet.js";
+import { IconNote } from "../Icons.js";
 
-function normalizeMath(text: string): string {
-  return text
-    .replace(/\\\[([\s\S]*?)\\\]/g, (_, m) => `$$${m}$$`)
-    .replace(/\\\(([\s\S]*?)\\\)/g, (_, m) => `$${m}$`);
-}
+type SaveStatus = "saved" | "dirty" | "saving";
 
-/** 中栏：note 编辑/预览/保存；非 note 文件触发 DocPreview overlay。 */
+/** 中栏 Live Craft 编辑器：默认 MD 渲染，双击/E 开 SourcePeek 源码编辑，
+ *  Pick 选区，引用跳转 scroll+flash；非 note 文件触发 DocPreview。 */
 export function EditorPane() {
   const { state, dispatch } = useWorkspace();
   const toast = useToast();
-  const taRef = useRef<HTMLTextAreaElement>(null);
-  const [saving, setSaving] = useState(false);
-  const [preview, setPreview] = useState(false);
+  const craftRef = useRef<HTMLDivElement>(null);
+  const [peekOpen, setPeekOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
+  const [previewDocId, setPreviewDocId] = useState<string | null>(null);
 
-  const save = async () => {
+  // 持久化：Title blur 或 SourcePeek autosave 调用
+  const persist = useCallback(async (content: string) => {
     if (!state.activeDocId) return;
-    if (!state.draftTitle.trim() && !state.draftContent.trim()) { toast("error", "标题或正文不能为空"); return; }
-    setSaving(true);
+    setSaveStatus("saving");
     try {
-      await api.updateNote(state.activeDocId, state.draftTitle, state.draftContent);
+      await api.updateNote(state.activeDocId, state.draftTitle, content);
       dispatch({ type: "MARK_CLEAN" });
-      toast("success", "已保存，正在重新摄入…");
+      setSaveStatus("saved");
       window.dispatchEvent(new Event("ws:doc-saved"));
     } catch (e) {
+      setSaveStatus("dirty");
       toast("error", `保存失败：${(e as Error).message}`);
-    } finally { setSaving(false); }
-  };
+    }
+  }, [state.activeDocId, state.draftTitle, dispatch, toast]);
 
-  // 引用 chip 跳转：定位 textarea 中近似片段并选中
+  useEffect(() => { setSaveStatus(state.dirty ? "dirty" : "saved"); }, [state.dirty]);
+
+  // 引用 chip 跳转：Craft 内 scroll + flash
   useEffect(() => {
     const onScrollTo = (e: Event) => {
-      const needle = String((e as CustomEvent).detail || "");
-      const ta = taRef.current;
-      if (!ta || !needle) return;
-      const idx = ta.value.indexOf(needle.slice(0, 80));
-      if (idx >= 0) {
-        ta.focus();
-        ta.setSelectionRange(idx, idx + Math.min(needle.length, 200));
-        ta.scrollTop = ta.value.substring(0, idx).split("\n").length * 22;
-      }
+      const snippet = String((e as CustomEvent).detail || "");
+      const el = craftRef.current;
+      if (!el || !snippet) return;
+      scrollCraftToSnippet(el, state.draftContent, snippet);
     };
     window.addEventListener("workspace:scroll-to", onScrollTo);
     return () => window.removeEventListener("workspace:scroll-to", onScrollTo);
-  }, []);
+  }, [state.draftContent]);
 
-  // 选区提取：mouseup/keyup 后若 ≥10 字，dispatch SET_SELECTION
-  const captureSelection = () => {
-    const ta = taRef.current;
-    if (!ta) return;
-    const { selectionStart, selectionEnd } = ta;
-    if (selectionEnd - selectionStart >= 10) {
-      const text = ta.value.slice(selectionStart, selectionEnd);
-      dispatch({ type: "SET_SELECTION", payload: { docId: state.activeDocId || "", text, start: selectionStart, end: selectionEnd } });
-    }
-  };
-
-  // 非 note 文件：显示「预览」按钮打开 DocPreview
-  const [previewDocId, setPreviewDocId] = useState<string | null>(null);
+  // 键盘 `e` 打开 SourcePeek（非 textarea 焦点时）
   useEffect(() => {
-    if (state.activeDocKind === "upload" && state.activeDocId) setPreviewDocId(state.activeDocId);
-    else setPreviewDocId(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "e" && !peekOpen && document.activeElement?.tagName !== "TEXTAREA" && document.activeElement?.tagName !== "INPUT") {
+        setPeekOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [peekOpen]);
+
+  useEffect(() => {
+    setPreviewDocId(state.activeDocKind === "upload" && state.activeDocId ? state.activeDocId : null);
   }, [state.activeDocKind, state.activeDocId]);
+
+  // Craft 内 Pick 选区 → SET_SELECTION
+  const onPick = (text: string) => {
+    const idx = state.draftContent.indexOf(text);
+    dispatch({
+      type: "SET_SELECTION",
+      payload: {
+        docId: state.activeDocId || "",
+        text,
+        start: idx >= 0 ? idx : 0,
+        end: idx >= 0 ? idx + text.length : text.length,
+      },
+    });
+  };
 
   // 空态
   if (!state.activeDocId) {
@@ -76,7 +86,7 @@ export function EditorPane() {
         <IconNote size={40} />
         <h2>工作台</h2>
         <p>从左侧打开或新建一篇笔记</p>
-        <p className="muted">编辑保存 · 选中文字带入对话 · ⌘K 搜索</p>
+        <p className="muted">双击正文编辑 · 选中文字带入对话 · ⌘K 搜索</p>
       </div>
     );
   }
@@ -94,42 +104,40 @@ export function EditorPane() {
   }
 
   return (
-    <div className="ws-editor" data-testid="editor-pane">
+    <div className="ws-editor ws-craft" data-testid="editor-pane">
       <div className="ws-editor-toolbar">
         <input
           className="ws-title-input"
           aria-label="标题"
           value={state.draftTitle}
           onChange={(e) => dispatch({ type: "SET_DRAFT_TITLE", payload: e.target.value })}
+          onBlur={() => { if (state.dirty) persist(state.draftContent); }}
           placeholder="笔记标题"
         />
         <span className="muted" style={{ fontSize: 12 }}>{state.draftContent.length} 字</span>
-        {state.dirty && <span className="ws-dirty-dot" title="有未保存修改" />}
-        <button className="btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => setPreview((p) => !p)}>{preview ? "编辑" : "预览"}</button>
-        <button className="btn" onClick={save} disabled={saving || (!state.dirty)} style={{ fontSize: 13 }}>
-          <IconSave size={13} /> 保存
-        </button>
+        <span className="ws-save-pill" data-status={saveStatus === "dirty" ? "pending" : saveStatus === "saving" ? "saving" : "idle"}>
+          {saveStatus === "saving" ? "保存中" : saveStatus === "dirty" ? "未保存" : "已保存"}
+        </span>
       </div>
 
       <SelectionContextBar />
 
-      {preview ? (
-        <PreviewPane content={state.draftContent} />
-      ) : (
-        <textarea
-          ref={taRef}
-          className="ws-textarea"
-          aria-label="正文"
-          value={state.draftContent}
-          onChange={(e) => dispatch({ type: "SET_DRAFT_CONTENT", payload: e.target.value })}
-          onSelect={captureSelection}
-          onKeyUp={captureSelection}
-          placeholder="支持 Markdown…"
-          spellCheck={false}
-        />
-      )}
+      <CraftBody
+        content={state.draftContent}
+        onOpenPeek={() => setPeekOpen(true)}
+        onPick={onPick}
+        scrollContainerRef={craftRef}
+      />
 
-      {/* doc_patch diff 条：AI 改文件后弹出，接受 = 同步到编辑器；拒绝 = 回滚 DB */}
+      <SourcePeek
+        open={peekOpen}
+        content={state.draftContent}
+        onChange={(v) => dispatch({ type: "SET_DRAFT_CONTENT", payload: v })}
+        onClose={() => setPeekOpen(false)}
+        onSave={persist}
+      />
+
+      {/* doc_patch diff 条：AI 改文件后弹出，接受 = 同步到 Craft；拒绝 = 回滚 DB */}
       {state.pendingPatch && state.pendingPatch.docId === state.activeDocId && (
         <PatchBar
           patch={state.pendingPatch}
@@ -201,18 +209,4 @@ function PatchBar({ patch, onAccept, onReject }: {
       </div>
     </div>
   );
-}
-
-/** 预览模式：惰性加载 markstream-react + katex（避免测试/编辑路径引入重依赖）。 */
-function PreviewPane({ content }: { content: string }) {
-  const [Mod, setMod] = useState<{ default: typeof import("markstream-react").default } | null>(null);
-  useEffect(() => {
-    let alive = true;
-    import("katex/dist/katex.min.css");
-    import("markstream-react").then((m) => { if (alive) setMod(m as any); });
-    return () => { alive = false; };
-  }, []);
-  if (!Mod) return <div className="ws-editor-preview muted">渲染中…</div>;
-  const R = Mod.default;
-  return <div className="ws-editor-preview"><R content={normalizeMath(content)} final={true} fade={false} /></div>;
 }

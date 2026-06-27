@@ -1,21 +1,24 @@
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { useEffect } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { WorkspaceProvider, useWorkspace } from "../WorkspaceStore.js";
 import { EditorPane } from "../EditorPane.js";
 
 vi.mock("../../api.js", () => ({
-  api: {
-    updateNote: vi.fn().mockResolvedValue({ ok: true }),
-    createNote: vi.fn(),
-  },
+  api: { updateNote: vi.fn().mockResolvedValue({ ok: true }), createNote: vi.fn() },
   getToken: () => "x",
 }));
 vi.mock("../../components/Toast.js", () => ({ useToast: () => () => {} }));
-// DocPreview / SelectionContextBar 拉入 markstream-react + katex（jsdom 下极慢）— stub 掉。
 vi.mock("../../components/DocPreview.js", () => ({ DocPreview: () => null }));
 vi.mock("../SelectionContextBar.js", () => ({ SelectionContextBar: () => null }));
+vi.mock("../craft/CraftBody.js", () => ({
+  CraftBody: ({ content, onOpenPeek }: any) => (
+    <div data-testid="craft-body" onDoubleClick={onOpenPeek}>{content}</div>
+  ),
+}));
+vi.mock("../craft/SourcePeek.js", () => ({
+  SourcePeek: ({ open }: { open: boolean }) => (open ? <div data-testid="source-peek" /> : null),
+}));
 
 function Seed({ children }: { children: React.ReactNode }) {
   const { dispatch } = useWorkspace();
@@ -25,19 +28,34 @@ function Seed({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-describe("EditorPane", () => {
-  it("saves dirty note via PATCH with (id, title, content)", async () => {
-    const user = userEvent.setup();
+describe("EditorPane Live Craft", () => {
+  it("shows craft body by default without preview toggle", () => {
     render(
       <WorkspaceProvider>
         <Seed><EditorPane /></Seed>
       </WorkspaceProvider>
     );
-    const ta = screen.getByRole("textbox", { name: /正文/i });
-    await user.clear(ta);
-    await user.type(ta, "updated");
-    await user.click(screen.getByRole("button", { name: "保存" }));
-    const { api } = await import("../../api.js");
-    expect(api.updateNote).toHaveBeenCalledWith("n1", "T", "updated");
+    expect(screen.getByTestId("craft-body")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /预览|编辑/ })).toBeNull();
+  });
+
+  it("opens source peek on double-click craft", () => {
+    render(
+      <WorkspaceProvider>
+        <Seed><EditorPane /></Seed>
+      </WorkspaceProvider>
+    );
+    fireEvent.doubleClick(screen.getByTestId("craft-body"));
+    expect(screen.getByTestId("source-peek")).toBeInTheDocument();
+  });
+
+  it("listens workspace:scroll-to on craft container", () => {
+    render(
+      <WorkspaceProvider>
+        <Seed><EditorPane /></Seed>
+      </WorkspaceProvider>
+    );
+    window.dispatchEvent(new CustomEvent("workspace:scroll-to", { detail: "body" }));
+    expect(screen.getByTestId("craft-body")).toBeInTheDocument();
   });
 });
