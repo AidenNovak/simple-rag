@@ -71,15 +71,6 @@ export function ChatPane({ chatModel }: Props) {
   const [allDocs, setAllDocs] = useState<any[]>([]);
   const [noteTotal, setNoteTotal] = useState<number | null>(null);
   const [allNotes, setAllNotes] = useState<{ id: string; title: string }[]>([]);
-  const [scopeMenuOpen, setScopeMenuOpen] = useState(false);
-  const scopeBtnRef = useRef<HTMLDivElement>(null);
-  // 点击外部关闭 scope 下拉（portal 在 body，需要全局监听）
-  useEffect(() => {
-    if (!scopeMenuOpen) return;
-    const close = () => setScopeMenuOpen(false);
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
-  }, [scopeMenuOpen]);
   const [pinnedSelection, setPinnedSelection] = useState<string | null>(null);
   const [webSearch, setWebSearch] = useState<boolean>(() => {
     try { return localStorage.getItem("kb.webSearch") === "1"; } catch { return false; }
@@ -329,9 +320,6 @@ export function ChatPane({ chatModel }: Props) {
         <div className="row" style={{ gap: 10, flex: 1 }}>
           {allDocs.length > 0 && (
             <ScopeDropdown
-              anchorRef={scopeBtnRef}
-              open={scopeMenuOpen}
-              onToggle={() => setScopeMenuOpen((v) => !v)}
               docs={allDocs}
               scopeDocIds={state.scopeDocIds}
               onToggleDoc={toggleDocInScope}

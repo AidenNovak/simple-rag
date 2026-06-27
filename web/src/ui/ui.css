@@ -15,3 +15,29 @@
 .ui-badge--ready { color: var(--status-ready); background: var(--status-ready-bg); }
 .ui-badge--failed { color: var(--status-failed); background: var(--status-failed-bg); }
 .ui-badge--neutral { color: var(--text-muted); background: var(--bg-hover); }
+
+/* ===== DropdownMenu (Radix) ===== */
+.ui-dropdown-content {
+  z-index: var(--z-dropdown);
+  min-width: 240px;
+  background: var(--paper-craft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-1) 0;
+  animation: kb-fade-in-up var(--duration-fast) var(--ease-out);
+}
+.ui-dropdown-item {
+  font-size: var(--text-body-size);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ui-dropdown-item[data-highlighted] { background: var(--bg-hover); }
+.ui-dropdown-label {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  color: var(--text-muted);
+}

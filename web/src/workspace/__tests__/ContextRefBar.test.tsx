@@ -27,8 +27,9 @@ describe("ContextRefBar", () => {
       <ContextRefBar selectedIds={["n1"]} titles={{ n1: "A" }} notes={NOTES} onToggle={onToggle} onClear={vi.fn()} />
     );
     await user.click(screen.getByRole("button", { name: /更换参考笔记/ }));
-    expect(document.body.querySelector(".ws-ref-portal")).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: /B/ }));
+    const content = await screen.findByTestId("context-ref-content");
+    expect(content).toBeTruthy();
+    await user.click(screen.getByText("B"));
     expect(onToggle).toHaveBeenCalledWith("n2", "B");
   });
 });
