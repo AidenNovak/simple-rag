@@ -21,6 +21,8 @@
     "test:workspace": "tsx server/test/workspace-context.test.ts",
     "test:streaming-extractor": "tsx server/test/streaming-extractor.test.ts",
     "test:db": "EMBEDDING_MODEL=mock tsx server/test/e2e.test.ts",
+    "design:preview": "python3 -m http.server 5199 --directory design/explorations",
+    "design:test": "node --test design/explorations/__tests__/explorations.test.mjs",
     "test:edge": "tsx server/test/edge-files.test.ts",
     "test:concurrent": "tsx server/test/concurrent.test.ts",
     "test:llm": "tsx server/test/real-llm.test.ts",

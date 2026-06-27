@@ -1,0 +1,32 @@
+/*
+  Variant D — Codex Pro
+  对比度: medium | 密度: compact | 对话: editorial | Accent: pulse | 圆角: 8px
+  特征: 紧凑 32px 行、Badge 仅 dot、breadcrumb 标题、mono caption、推理 mono pill
+*/
+
+/* 紧凑侧栏 */
+.ex-tree-row { min-height: 30px; padding: 4px 10px; font-size: 13px; border-radius: 6px; }
+.ex-section-head { padding: 4px 10px 4px 8px; }
+.ex-section { margin-bottom: 12px; }
+
+/* Badge 仅 dot */
+.ex-badge { width: 6px; height: 6px; padding: 0; border-radius: 50%; overflow: hidden; text-indent: -999px; background: var(--accent-bright); }
+
+/* breadcrumb 标题 */
+.ex-craft-toolbar::before { content: "笔记 / "; font-size: 11px; color: var(--ink-muted); font-weight: 400; }
+.ex-craft-meta { font-family: ui-monospace, "SF Mono", monospace; font-size: 11px; }
+
+/* mono caption pills */
+.ex-reasoning-pill { font-family: ui-monospace, monospace; font-size: 10px; padding: 3px 8px; }
+.ex-chat-header { font-family: ui-monospace, monospace; font-size: 10px; }
+
+/* 紧凑 followup */
+.ex-followup { font-size: 11px; padding: 4px 10px; border-radius: 6px; }
+.ex-cite-chip { font-family: ui-monospace, monospace; font-size: 10px; }
+
+/* Craft 正文稍紧凑 */
+.ex-craft-body { padding: 24px 28px; line-height: 1.65; }
+.ex-craft-body h1 { font-size: 24px; }
+
+/* composer 圆角小 */
+.ex-composer { border-radius: var(--radius); }

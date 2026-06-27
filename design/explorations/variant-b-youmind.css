@@ -1,0 +1,25 @@
+/*
+  Variant B — YouMind Context
+  对比度: medium | 密度: medium | 对话: conversational | Accent: pulse | 圆角: 10px
+  特征: ContextRefBar 常驻显眼琥珀、Craft 选区高亮条、section uppercase、助手浅纸底
+*/
+
+/* ContextRefBar 琥珀更显眼 */
+.ex-context-bar { background: rgba(242,140,46,0.14); border-color: rgba(180,83,9,0.22); font-weight: 500; color: var(--ink); }
+
+/* Craft 模拟选区高亮（Pick 视觉） */
+.ex-craft-body { border-left: 3px solid rgba(242,140,46,0.35); margin: 16px 0; padding: 32px 28px 32px 32px; max-width: 680px; }
+.ex-craft-body p:first-of-type { background: linear-gradient(transparent 60%, rgba(242,140,46,0.16) 60%); display: inline; }
+
+/* section uppercase 加重 */
+.ex-section-head { letter-spacing: 0.08em; }
+
+/* 助手浅纸底卡片，对话感 */
+.ex-msg-assistant .ex-prose { background: rgba(255,252,247,0.7); padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); }
+
+/* header scope 突出 */
+.ex-chat-header { justify-content: space-between; }
+.ex-chat-header .ex-scope { color: var(--ink); font-weight: 500; }
+
+/* active 加 amber dot */
+.ex-tree-row.active::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-amber); flex-shrink: 0; }

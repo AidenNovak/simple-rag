@@ -1,0 +1,32 @@
+/* design/explorations/_tokens-base.css — 与 web/src/theme/tokens.css light 对齐 */
+:root {
+  --paper-sidebar: #EDE6DC;
+  --paper-craft: #FFFCF7;
+  --paper-base: #F7F2EA;
+  --paper-topbar: #FFFCF7;
+  --ink: #1A1612;
+  --ink-secondary: #5C534A;
+  --ink-muted: #8A8178;
+  --accent-amber: #B45309;
+  --accent-bright: #F28C2E;
+  --status-ready: #16a34a;
+  --border: rgba(26, 22, 18, 0.08);
+  --border-strong: rgba(26, 22, 18, 0.14);
+  --shadow-soft: 0 1px 3px rgba(26, 22, 18, 0.06);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 22px;
+  --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --duration: 180ms;
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; color: var(--ink); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+input { font: inherit; }

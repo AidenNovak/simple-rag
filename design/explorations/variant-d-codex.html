@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!--
+  Variant D — Codex Pro
+  对比度: medium | 密度: compact | 对话: editorial | Accent: pulse | 圆角: 8px
+  特征: 紧凑 30px 行、Badge 仅 dot、breadcrumb 标题、mono caption、推理 mono pill
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>D · Codex Pro — kb mock</title>
+  <link rel="stylesheet" href="_tokens-base.css" />
+  <link rel="stylesheet" href="_components.css" />
+  <link rel="stylesheet" href="variant-d-codex.css" />
+</head>
+<body>
+  <div class="ex-workspace">
+    <header class="ex-topbar">
+      <button type="button" style="font-size:16px;">🌙</button>
+      <span style="margin-left:auto;font-size:13px;color:var(--ink-muted);">aiden@meimaobing.ai</span>
+      <button type="button" style="font-size:13px;color:var(--ink-secondary);border:1px solid var(--border);padding:4px 12px;border-radius:999px;">设置</button>
+    </header>
+
+    <aside class="ex-left">
+      <div class="ex-brand">meimaobing</div>
+      <section class="ex-section">
+        <div class="ex-section-head">笔记 <button type="button" class="ex-section-action">+</button></div>
+        <div class="ex-tree-row active"><span>随手记 · 真好</span></div>
+        <div class="ex-tree-row"><span>未命名笔记</span><span class="ex-badge">处理中</span></div>
+        <div class="ex-tree-row"><span>研究提纲 · 第三季</span></div>
+        <div class="ex-tree-row"><span>RAG 架构核心要点</span></div>
+        <div class="ex-tree-row"><span>读书摘录 · 原则</span></div>
+      </section>
+      <section class="ex-section">
+        <div class="ex-section-head">对话 <button type="button" class="ex-section-action">+</button></div>
+        <div class="ex-tree-row"><span>想你了，今天还好吗</span></div>
+        <div class="ex-tree-row"><span>你好我是知识助手</span></div>
+        <div class="ex-tree-row"><span>研究提纲讨论</span></div>
+      </section>
+      <section class="ex-section">
+        <div class="ex-section-head">文件 <button type="button" class="ex-section-action">↑</button></div>
+        <div class="ex-tree-row"><span>论文 · 注意力机制.pdf</span></div>
+      </section>
+    </aside>
+
+    <main class="ex-center">
+      <div class="ex-craft-toolbar">
+        <input class="ex-craft-title" value="随手记 · 真好" readonly />
+        <div class="ex-craft-meta">87 字 · saved</div>
+      </div>
+      <article class="ex-craft-body">
+        <h1>随手记 · 真好</h1>
+        <p>今天把想法整理成笔记。核心结论是：写作台应该<strong>以纸面为中心</strong>，对话只在边缘辅助。</p>
+        <p>第二段用来测试行高与段落间距，以及引用跳转时的视觉节奏。代码片段示例：<code>update_note(id, content)</code>。</p>
+        <h2>今日要点</h2>
+        <p>暖色纸面 + 琥珀点缀，比纯白底更耐看；三栏各司其职，互不抢戏。</p>
+      </article>
+    </main>
+
+    <aside class="ex-right">
+      <div class="ex-chat-header">
+        <span>scope: 1 doc</span>
+        <span style="margin-left:auto;">6 notes · 5 indexed</span>
+      </div>
+      <div class="ex-chat-scroll">
+        <div class="ex-msg ex-msg-user">
+          <div class="ex-bubble-wrap"><div class="ex-bubble">你帮我记录一下吧，今天的想法</div></div>
+        </div>
+        <div class="ex-msg ex-msg-assistant">
+          <div class="ex-reasoning-pill">trace · 4 steps</div>
+          <div class="ex-prose">已更新笔记《随手记 · 真好》，补充了今日要点与待办。你可以在中间栏继续编辑，或直接在这里追问我。</div>
+          <div class="ex-cite-chip"><span>[1]</span> 随手记 · 真好</div>
+          <div class="ex-followups">
+            <button type="button" class="ex-followup">能帮我整理成提纲吗？</button>
+            <button type="button" class="ex-followup">还有哪些待办？</button>
+            <button type="button" class="ex-followup">总结成三句话</button>
+          </div>
+        </div>
+      </div>
+      <div class="ex-composer-stack">
+        <div class="ex-context-bar">ref: 随手记 · 真好 ▾</div>
+        <div class="ex-composer">
+          <textarea rows="1" placeholder="ask about selected notes…" readonly></textarea>
+          <button type="button" class="ex-web-toggle">web</button>
+          <button type="button" class="ex-send">↑</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</body>
+</html>

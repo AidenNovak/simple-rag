@@ -1,0 +1,27 @@
+/*
+  Variant A — Bear Studio
+  对比度: soft | 密度: airy | 对话: editorial | Accent: whisper | 圆角: 12px
+  特征: 助手零背景纯流式、Craft 大留白、侧栏 active 2px amber 条、meta 仅 green dot
+*/
+
+/* 助手无卡片 — 纯流式，最大留白 */
+.ex-msg-assistant .ex-prose { max-width: 100%; }
+.ex-msg-user .ex-bubble { background: rgba(26,22,18,0.05); border-radius: 16px 16px 4px 16px; }
+
+/* Craft meta 仅 dot + 二字 */
+.ex-craft-meta .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--status-ready); }
+
+/* 侧栏 active：左 2px amber 条 + 极淡底 */
+.ex-tree-row.active { box-shadow: inset 2px 0 0 var(--accent-bright); background: rgba(242,140,46,0.06); }
+
+/* composer 阴影浮起，context bar 淡 */
+.ex-composer { box-shadow: var(--shadow-soft); border-color: var(--border); }
+.ex-context-bar { background: rgba(242,140,46,0.06); border-color: rgba(242,140,46,0.12); font-weight: 400; }
+
+/* header 收敛 */
+.ex-chat-header { opacity: 0.9; }
+.ex-chat-scroll { padding: 20px 16px; }
+
+/* Craft 正文区更多呼吸 */
+.ex-craft-body { padding: 40px 32px; }
+.ex-craft-toolbar { border-bottom-color: rgba(26,22,18,0.05); }

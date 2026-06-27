@@ -1,0 +1,42 @@
+/*
+  Variant E — Inkwell Minimal
+  对比度: soft | 密度: airy | 对话: editorial | Accent: whisper | 圆角: 6px
+  特征: 极简二元（ink + 纸色）、无琥珀装饰、active 仅下划线、最大留白、衬线标题、发送钮 ink 描边
+  设计意图: 最克制的「稿纸」气质，琥珀完全退场，靠留白与字距建立层级
+*/
+
+/* 衬线标题区（serif 仅 h1/h2，正文仍 sans） */
+.ex-craft-body h1, .ex-craft-body h2 { font-family: ui-serif, "Songti SC", Georgia, serif; font-weight: 600; }
+.ex-brand { font-family: ui-serif, "Songti SC", Georgia, serif; letter-spacing: -0.01em; }
+
+/* 去掉琥珀：active 仅下划线 */
+.ex-tree-row.active { background: transparent; color: var(--ink); font-weight: 600; border-bottom: 1.5px solid var(--ink); border-radius: 0; }
+.ex-tree-row:hover { background: transparent; color: var(--ink); }
+
+/* Badge 退为 ink 灰点 */
+.ex-badge { background: rgba(26,22,18,0.08); color: var(--ink-muted); font-weight: 400; }
+
+/* 助手纯流式，用户极淡底线气泡 */
+.ex-msg-assistant .ex-prose { max-width: 100%; }
+.ex-msg-user .ex-bubble { background: transparent; border-bottom: 1px solid var(--border-strong); border-radius: 0; padding: 8px 0; }
+
+/* cite 退为 ink 下划线，非琥珀 */
+.ex-cite-chip { background: transparent; color: var(--ink); border-bottom: 1px solid var(--ink-muted); border-radius: 0; padding: 0 2px; }
+
+/* context bar 退为纯文字 */
+.ex-context-bar { background: transparent; border: none; border-top: 1px solid var(--border); border-radius: 0; padding: 8px 2px; color: var(--ink-muted); font-style: italic; }
+
+/* composer 方角描边，发送钮 ink 描边空心 */
+.ex-composer { border-radius: 6px; border: 1px solid var(--border-strong); background: transparent; }
+.ex-send { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+.ex-send:hover { background: var(--ink); color: var(--paper-craft); }
+
+/* reasoning / followup 退为细线 */
+.ex-reasoning-pill { border: none; border-bottom: 1px solid var(--border); border-radius: 0; padding: 4px 0; }
+.ex-followup { border: none; border-bottom: 1px solid var(--border); border-radius: 0; padding: 4px 0; color: var(--ink-secondary); }
+
+/* 更大留白 */
+.ex-craft-body { padding: 48px 40px; max-width: 660px; }
+.ex-chat-scroll { padding: 24px 18px; }
+.ex-section { margin-bottom: 20px; }
+.ex-section-head { opacity: 0.6; }

@@ -1,0 +1,28 @@
+/*
+  Variant C — Apple Calm
+  对比度: soft | 密度: medium | 对话: conversational | Accent: whisper | 圆角: 18px
+  特征: iMessage 式用户气泡、助手仅 caption、toolbar 44px meta 收进 ···、发送钮 ink 色
+*/
+
+/* 侧栏行高 36px，更宽松 */
+.ex-tree-row { min-height: 36px; padding: 8px 12px; border-radius: 10px; }
+
+/* 用户 iMessage 气泡 */
+.ex-msg-user .ex-bubble { background: #E8E3DA; border-radius: 18px 18px 4px 18px; padding: 12px 16px; }
+
+/* 助手无 avatar，仅小 caption */
+.ex-msg-assistant .ex-role { font-size: 11px; color: var(--ink-muted); margin-bottom: 6px; font-weight: 500; }
+.ex-msg-assistant .ex-prose { padding-left: 0; }
+
+/* toolbar 44px，meta 收进 ··· */
+.ex-craft-toolbar { min-height: 44px; }
+.ex-craft-meta { display: none; }
+.ex-craft-toolbar::after { content: "···"; margin-left: auto; color: var(--ink-muted); letter-spacing: 3px; font-size: 16px; cursor: pointer; }
+
+/* composer 圆角更大，发送钮 ink */
+.ex-composer { border-radius: 20px; }
+.ex-send { background: var(--ink); }
+.ex-context-bar { border-radius: 12px; }
+
+/* section 更柔和 */
+.ex-section-head { font-weight: 500; opacity: 0.7; }
