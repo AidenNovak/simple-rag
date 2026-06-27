@@ -20,7 +20,7 @@
 .workspace-resizer-right { grid-area: resizer-r; cursor: col-resize; width: 4px; min-width: 4px; }
 .workspace-right { grid-area: right; }
 .workspace-resizer-left:hover,
-.workspace-resizer-right:hover { background: rgba(87, 134, 254, 0.2); }
+.workspace-resizer-right:hover { background: var(--ws-resizer-hover); }
 .workspace-topbar {
   display: flex;
   align-items: center;
@@ -39,6 +39,9 @@
   display: flex;
   flex-direction: column;
 }
+.workspace-left { border-right: 1px solid var(--border); background: var(--ws-left-bg); }
+.workspace-center { background: var(--ws-center-bg); }
+.workspace-right { border-left: 1px solid var(--border); background: var(--ws-right-bg); }
 .workspace-left { border-right: 1px solid var(--border, #e5e5ea); }
 .workspace-right { border-left: 1px solid var(--border, #e5e5ea); }
 .workspace-mobile-gate {
@@ -67,11 +70,15 @@
 .ws-tree-group-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 8px 6px; }
 .ws-tree-row {
   display: flex; align-items: center; gap: 8px;
-  padding: 6px 8px; border-radius: 6px; cursor: pointer;
+  padding: 6px 8px; border-radius: 8px; cursor: pointer;
   font-size: 13px; color: var(--text-secondary);
 }
 .ws-tree-row:hover { background: var(--bg-hover); color: var(--text); }
-.ws-tree-row.active { background: var(--bg-elevated); color: var(--text); }
+.ws-tree-row.active {
+  background: var(--bg-hover);
+  color: var(--text);
+  box-shadow: inset 3px 0 0 var(--accent-bright);
+}
 .ws-tree-icon { opacity: 0.7; flex-shrink: 0; display: flex; }
 .ws-tree-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ws-tree-status { font-size: 11px; opacity: 0.6; flex-shrink: 0; }
@@ -84,18 +91,25 @@
 .ws-editor-empty h2 { font-size: 20px; margin: 12px 0 4px; }
 .ws-editor { display: flex; flex-direction: column; height: 100%; background: var(--bg-main); position: relative; }
 .ws-editor-toolbar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.ws-title-input { font-size: 16px; font-weight: 600; flex: 1; min-width: 0; }
+.ws-title-input {
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  font-family: ui-sans-serif, -apple-system, "PingFang SC", sans-serif;
+  color: var(--ink);
+}
 .ws-dirty-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 .ws-textarea { flex: 1; resize: none; padding: 18px 24px; font-size: 15px; line-height: 1.75; font-family: "SF Mono", "Menlo", ui-monospace, monospace; background: var(--bg-main); color: var(--text); }
 .ws-editor-preview { flex: 1; overflow-y: auto; padding: 20px 32px; }
 
 /* 选区条 */
-.ws-selection-bar { display: flex; align-items: center; gap: 8px; padding: 6px 16px; background: rgba(87,134,254,0.08); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); flex-shrink: 0; }
+.ws-selection-bar { display: flex; align-items: center; gap: 8px; padding: 6px 16px; background: var(--selection-bar-bg); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); flex-shrink: 0; }
 .ws-sel-pin { font-size: 12px; color: #5786FE; padding: 2px 8px; border: 1px solid #5786FE; border-radius: 4px; }
 .ws-sel-clear { margin-left: auto; color: var(--text-muted); font-size: 16px; padding: 0 4px; }
 
 /* doc_patch diff 条 */
-.ws-patch-bar { position: absolute; left: 0; right: 0; bottom: 0; max-height: 50%; background: var(--bg-main); border-top: 1px solid var(--border-light); box-shadow: 0 -8px 24px rgba(0,0,0,0.4); display: flex; flex-direction: column; z-index: 40; }
+.ws-patch-bar { position: absolute; left: 0; right: 0; bottom: 0; max-height: 50%; background: var(--paper-craft); border-top: 1px solid var(--border-light); box-shadow: var(--shadow-soft); display: flex; flex-direction: column; z-index: 40; }
 .ws-patch-head { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--border); }
 .ws-patch-diff { overflow-y: auto; padding: 6px 0; font-family: "SF Mono", ui-monospace, monospace; font-size: 12px; }
 .diff-stat { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; }
@@ -157,6 +171,8 @@
   overflow-y: auto;
   padding: 20px 32px;
   cursor: default;
+  font-family: ui-sans-serif, -apple-system, "PingFang SC", "Songti SC", serif;
+  color: var(--ink);
 }
 .ws-craft-inner { max-width: 720px; }
 .ws-snippet-flash {
@@ -174,9 +190,9 @@
   right: 0;
   width: 40%;
   height: 100%;
-  background: var(--bg-elevated);
+  background: var(--paper-craft);
   border-left: 1px solid var(--border);
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-peek);
   display: flex;
   flex-direction: column;
   z-index: 30;
