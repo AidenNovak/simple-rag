@@ -38,6 +38,8 @@ export interface ToolContext {
   creds: UserChatCreds;
   /** 会话级文档范围。null = 全部文档。 */
   docIds?: string[] | null;
+  /** 当前对话 ID（save_conversation_as_note 用，可选）。 */
+  conversationId?: string | null;
 }
 
 // ---- 工具实现 ----
@@ -260,6 +262,46 @@ const tools = {
     } finally {
       client.release();
     }
+  },
+
+  /**
+   * 把当前/指定对话沉淀为一条笔记（带引用回链与时间）。
+   * 读对话消息 → 结构化为 Markdown 笔记 → create_note 入库。
+   * agent 判断对话有价值时主动调用，或在用户要求"存下这段对话"时调用。
+   * title 由 agent 提供（如不提供则用对话标题）。
+   */
+  save_conversation_as_note: async (args: { conversation_id?: string; title?: string; summary?: string }, ctx: ToolContext): Promise<ToolResult> => {
+    const convoId = args.conversation_id || ctx.conversationId;
+    if (!convoId) return { name: "save_conversation_as_note", content: "（无法确定要保存的对话，缺少 conversation_id）" };
+    const client = await getPoolClient();
+    let title: string;
+    let body: string;
+    try {
+      // 读对话标题 + 消息（强制 userId 隔离）
+      const cRes = await client.query(
+        "SELECT title FROM conversations WHERE id = $1 AND user_id = $2",
+        [convoId, ctx.userId]
+      );
+      if (cRes.rows.length === 0) return { name: "save_conversation_as_note", content: "（未找到该对话）" };
+      title = args.title || cRes.rows[0].title || "对话笔记";
+      const mRes = await client.query(
+        "SELECT role, content, created_at FROM messages WHERE conversation_id = $1 AND user_id = $2 ORDER BY created_at ASC",
+        [convoId, ctx.userId]
+      );
+      if (mRes.rows.length === 0) return { name: "save_conversation_as_note", content: "（该对话还没有内容）" };
+      // 组装结构化笔记
+      const when = new Date(mRes.rows[0].created_at).toLocaleString("zh-CN", { dateStyle: "short", timeStyle: "short" });
+      const transcript = mRes.rows.map((m: any) => {
+        const role = m.role === "user" ? "🙋 用户" : m.role === "assistant" ? "🤖 助手" : m.role;
+        return `**${role}**\n\n${m.content}`;
+      }).join("\n\n---\n\n");
+      const summaryBlock = args.summary ? `> ${args.summary}\n\n` : "";
+      body = `${summaryBlock}_对话时间：${when}_\n\n${transcript}`;
+    } finally {
+      client.release();
+    }
+    // 复用 create_note 入库逻辑
+    return tools.create_note({ title, content: body }, ctx);
   },
 
   /**
@@ -497,6 +539,21 @@ export const TOOL_DEFS: ToolDef[] = [
           top_k: { type: "integer", description: "返回数量，默认 6", minimum: 1, maximum: 15 },
         },
         required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "save_conversation_as_note",
+      description: "把当前对话（或指定对话）沉淀为一条笔记，保留完整问答记录、时间与引用。当你判断这段对话对未来有复用价值（如深入的方案讨论、重要决策、网络调研结果）时主动调用；用户说\"存下这段对话/对话存成笔记\"时也用此工具。",
+      parameters: {
+        type: "object",
+        properties: {
+          conversation_id: { type: "string", description: "要保存的对话ID，省略则保存当前对话" },
+          title: { type: "string", description: "笔记标题（可选，省略用对话原标题）" },
+          summary: { type: "string", description: "一句话摘要，置于笔记开头（可选）" },
+        },
       },
     },
   },

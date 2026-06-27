@@ -55,6 +55,7 @@ const SYSTEM_PROMPT = `你是一个私人知识库助手。你拥有以下工具
 沉淀方式（二选一，在调用 finish **之前**完成）：
 - **新建笔记**：内容是独立主题 → create_note（标题简明，正文用 Markdown 组织）。
 - **追加到现有**：内容属于已存在的主题/日记/累积型笔记 → 先 list_notes 看有无合适的，有则 append_note（不覆盖原文），无合适则 create_note。
+- **整段对话有价值**：一次深入的方案讨论/重要决策/网络调研 → save_conversation_as_note，保留完整问答与时间，便于日后回溯。
 
 沉淀后，在 finish 的回答末尾用一句话告知用户："已将上述内容记入笔记《xxx》"，让用户知道发生了沉淀。
 
@@ -192,13 +193,14 @@ export async function agentAnswer(
   docIds?: string[] | null,
   enableWebSearch?: boolean,
   contextNotes?: ContextNote[],
-  selection?: string
+  selection?: string,
+  conversationId?: string | null
 ): Promise<AgentResult> {
   const { apiKey } = resolveChatApiKey(creds);
   if (!apiKey) throw new Error("[agent] no API key resolved (set CHAT_API_KEY or bind user key)");
   const model = resolveChatModel(creds);
   const baseUrl = resolveChatBaseUrl(creds); const client = makeChatClient(apiKey, baseUrl);
-  const ctx: ToolContext = { userId, creds, docIds };
+  const ctx: ToolContext = { userId, creds, docIds, conversationId };
   const toolDefs = getToolDefs({ webSearch: enableWebSearch });
 
   // 用 token 预算构建上下文（替代旧的 history.slice(-6)）
@@ -528,13 +530,14 @@ export async function* agentAnswerStream(
   docIds?: string[] | null,
   enableWebSearch?: boolean,
   contextNotes?: ContextNote[],
-  selection?: string
+  selection?: string,
+  conversationId?: string | null
 ): AsyncGenerator<StreamEvent, void, unknown> {
   const { apiKey } = resolveChatApiKey(creds);
   if (!apiKey) { yield { type: "error", message: "no API key resolved" }; return; }
   const model = resolveChatModel(creds);
   const baseUrl = resolveChatBaseUrl(creds); const client = makeChatClient(apiKey, baseUrl);
-  const ctx: ToolContext = { userId, creds, docIds };
+  const ctx: ToolContext = { userId, creds, docIds, conversationId };
   const toolDefs = getToolDefs({ webSearch: enableWebSearch });
 
   // 用 token 预算构建上下文（替代旧的 history.slice(-6)）
