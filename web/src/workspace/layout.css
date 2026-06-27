@@ -27,7 +27,9 @@
   gap: 12px;
   padding: 0 16px;
   border-bottom: 1px solid var(--border, #e5e5ea);
+  background: var(--paper-topbar);
 }
+.theme-toggle { font-size: 16px; line-height: 1; }
 .workspace-topbar .ws-title { font-weight: 600; }
 .workspace-left,
 .workspace-center,

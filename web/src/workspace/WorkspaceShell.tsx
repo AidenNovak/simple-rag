@@ -1,5 +1,6 @@
 import { WorkspaceLayout } from "./layout/WorkspaceLayout.js";
 import { CommandPalette } from "./CommandPalette.js";
+import { ThemeToggle } from "../theme/ThemeToggle.js";
 import "./layout.css";
 
 interface Props {
@@ -16,7 +17,9 @@ export function WorkspaceShell({ user, onOpenSettings }: Props) {
         topbar={
           <>
             <span className="ws-title">私人知识库</span>
-            <span className="muted" style={{ marginLeft: "auto", fontSize: 13 }}>{user.email}</span>
+            <span style={{ marginLeft: "auto" }} />
+            <ThemeToggle />
+            <span className="muted" style={{ fontSize: 13 }}>{user.email}</span>
             <button type="button" className="btn-secondary" style={{ padding: "4px 12px", fontSize: 13 }} onClick={onOpenSettings}>设置</button>
           </>
         }
