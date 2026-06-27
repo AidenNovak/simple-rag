@@ -39,6 +39,22 @@ npm run web:dev                 # 前端 :5173
 
 代码位于 `web/src/workspace/`：`WorkspaceStore`（reducer 状态）+ `WorkspaceShell`（布局）+ `FileTree`/`EditorPane`/`ChatPane`/`SelectionContextBar`/`CommandPalette`。
 
+### 布局完整性（防错位）
+
+三栏使用 **5 列 CSS Grid**（左 `|` resizer `|` 中 `|` resizer `|` 右）+ `grid-template-areas` 显式绑定，resizer 占独立列——避免旧版「3 列 grid + 5 子节点」导致的 pane 挤错格子。Chat 输入框是右栏的 **flex 子节点**（`.ws-composer-stack`），不会 `position:absolute` 铺满全窗。
+
+可自动验证的不变量（`web/src/workspace/layout/invariants.ts`）：
+- `assertPaneLayout`：三 pane 存在且水平顺序 left → center → right
+- `isComposerContained`：composer 100% 落在右栏矩形内
+
+验证命令：
+```bash
+npm run web:test                                  # 含 invariants / LayoutGrid / ComposerContainment 单测
+npm run dev && npm run web:dev
+npx playwright test server/test/playwright-layout.spec.ts        # 几何 LV1/LV2/LB1 + 视觉 baseline
+npx playwright test server/test/playwright-workspace.spec.ts     # 功能 E2E
+```
+
 ## 架构
 
 ```text
