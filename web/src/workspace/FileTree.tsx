@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api.js";
 import { useWorkspace } from "./WorkspaceStore.js";
-import { IconNote, IconFile, IconPlus, IconTrash, IconUpload } from "../Icons.js";
+import { IconNote, IconFile, IconTrash, IconUpload } from "../Icons.js";
 import { useToast } from "../components/Toast.js";
+import { SidebarSection } from "./SidebarSection.js";
 
 interface DocRow {
   id: string;
@@ -13,7 +14,7 @@ interface DocRow {
 }
 interface ConvoRow { id: string; title: string; }
 
-/** 左栏：文档/笔记列表 + 对话列表 + 新建/删除/上传入口。 */
+/** Apple 风左栏：meimaobing 品牌 + 笔记/对话/文件分区（section 标题 + trailing +）。 */
 export function FileTree() {
   const { state, dispatch } = useWorkspace();
   const toast = useToast();
@@ -32,6 +33,13 @@ export function FileTree() {
   };
   useEffect(() => { load(); }, []);
 
+  // 首条消息创建会话后刷新对话列表
+  useEffect(() => {
+    const onCreated = () => { load(); };
+    window.addEventListener("ws:convo-created", onCreated);
+    return () => window.removeEventListener("ws:convo-created", onCreated);
+  }, []);
+
   const notes = docs.filter((d) => d.kind === "note");
   const files = docs.filter((d) => d.kind !== "note");
 
@@ -48,13 +56,14 @@ export function FileTree() {
 
   const newNote = async () => {
     try {
-      // 服务端要求 title/content 非空；用占位种子创建，用户进入后可改。
       const r = await api.createNote("未命名笔记", "（开始编辑…）");
       const doc = r.document;
       setDocs((ds) => [{ id: doc.id, title: doc.title, kind: "note", status: doc.status, createdAt: doc.createdAt }, ...ds]);
       dispatch({ type: "SET_ACTIVE_DOC", payload: { id: doc.id, title: doc.title, content: "", kind: "note" } });
     } catch { toast("error", "新建失败"); }
   };
+
+  const newConvo = () => dispatch({ type: "SET_CONVO", payload: null });
 
   const del = async (d: DocRow) => {
     if (!confirm(`删除「${d.title}」？`)) return;
@@ -78,8 +87,7 @@ export function FileTree() {
 
   const Row = ({ d }: { d: DocRow }) => (
     <div
-      key={d.id}
-      className={`ws-tree-row ${state.activeDocId === d.id ? "active" : ""}`}
+      className={`ws-tree-row${state.activeDocId === d.id ? " active-doc" : ""}`}
       data-testid="tree-row"
       onClick={() => openDoc(d)}
       title={d.title}
@@ -93,53 +101,44 @@ export function FileTree() {
 
   return (
     <div className="ws-filetree" data-testid="file-tree">
-      <div className="ws-tree-actions">
-        <button className="btn" onClick={newNote} style={{ flex: 1, fontSize: 13 }}><IconPlus size={13} /> 新建笔记</button>
-        <button className="btn-secondary" onClick={() => fileInput.current?.click()} title="上传文件" style={{ fontSize: 13 }}>
-          <IconUpload size={13} />
-        </button>
-        <input
-          ref={fileInput}
-          type="file"
-          style={{ display: "none" }}
-          accept=".pdf,.docx,.doc,.pptx,.xlsx,.xls,.csv,.md,.markdown,.txt,.html,.htm,.epub"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }}
-        />
-      </div>
+      <div className="ws-sidebar-brand">meimaobing</div>
 
-      {loading && <div className="muted" style={{ padding: 12, fontSize: 12 }}>加载中…</div>}
+      <SidebarSection title="笔记" actionLabel="新建笔记" onAction={newNote}>
+        {notes.map((d) => (<li key={d.id}><Row d={d} /></li>))}
+      </SidebarSection>
 
-      {notes.length > 0 && (
-        <div className="ws-tree-group">
-          <div className="ws-tree-group-label">📝 笔记 ({notes.length})</div>
-          {notes.map((d) => <Row key={d.id} d={d} />)}
-        </div>
-      )}
-      {files.length > 0 && (
-        <div className="ws-tree-group">
-          <div className="ws-tree-group-label">📄 文件 ({files.length})</div>
-          {files.map((d) => <Row key={d.id} d={d} />)}
-        </div>
-      )}
-
-      {convos.length > 0 && (
-        <div className="ws-tree-group">
-          <div className="ws-tree-group-label">💬 对话 ({convos.length})</div>
-          {convos.map((c) => (
+      <SidebarSection title="对话" actionLabel="新建对话" onAction={newConvo}>
+        {convos.map((c) => (
+          <li key={c.id}>
             <div
-              key={c.id}
-              className={`ws-tree-row convo ${state.convoId === c.id ? "active" : ""}`}
+              className={`ws-tree-row ws-tree-row-convo${state.convoId === c.id ? " active-convo" : ""}`}
+              data-testid="tree-row-convo"
               onClick={() => openConvo(c.id)}
               title={c.title}
             >
               <span className="ws-tree-label">{c.title}</span>
             </div>
-          ))}
-        </div>
+          </li>
+        ))}
+      </SidebarSection>
+
+      {files.length > 0 && (
+        <SidebarSection title="文件" actionLabel="上传文件" onAction={() => fileInput.current?.click()} actionIcon={<IconUpload size={14} />}>
+          {files.map((d) => (<li key={d.id}><Row d={d} /></li>))}
+        </SidebarSection>
       )}
 
+      <input
+        ref={fileInput}
+        type="file"
+        style={{ display: "none" }}
+        accept=".pdf,.docx,.doc,.pptx,.xlsx,.xls,.csv,.md,.markdown,.txt,.html,.htm,.epub"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }}
+      />
+
+      {loading && <div className="muted ws-sidebar-loading">加载中…</div>}
       {!loading && docs.length === 0 && convos.length === 0 && (
-        <div className="muted" style={{ padding: 16, textAlign: "center", fontSize: 12 }}>空空如也</div>
+        <div className="muted ws-sidebar-empty">空空如也</div>
       )}
     </div>
   );
