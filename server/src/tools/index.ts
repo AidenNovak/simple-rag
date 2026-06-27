@@ -190,6 +190,34 @@ const tools = {
   },
 
   /**
+   * 追加内容到现有笔记末尾（不覆盖原文）。
+   * 用于把对话中的有价值信息累积到「日记/思路本/主题笔记」中。
+   * 比 get_note + update_note 的组合更轻：无需读取全文、不会意外覆盖。
+   */
+  append_note: async (args: { note_id: string; content: string }, ctx: ToolContext): Promise<ToolResult> => {
+    const db = getDb();
+    // 先读原笔记（强制 userId 隔离 + kind=note）
+    const [row] = await db.select().from(schema.documents)
+      .where(and(eq(schema.documents.id, args.note_id), eq(schema.documents.userId, ctx.userId), eq(schema.documents.kind, "note"))).limit(1);
+    if (!row) return { name: "append_note", content: "（未找到该笔记）" };
+    const old = row.contentMd || "";
+    // 追加：用分隔符衔接，避免上下文粘连
+    const sep = old ? "\n\n---\n\n" : "";
+    const merged = `${old}${sep}${args.content}`;
+    const [updated] = await db.update(schema.documents)
+      .set({ contentMd: merged, status: "pending" })
+      .where(and(eq(schema.documents.id, args.note_id), eq(schema.documents.userId, ctx.userId))).returning();
+    // 重新摄入让新内容可检索
+    const { enqueueIngest } = await import("../jobs/queue.js");
+    await enqueueIngest({ documentId: updated.id, userId: ctx.userId });
+    return {
+      name: "append_note",
+      content: `已向笔记《${updated.title}》追加内容并重新摄入知识库。`,
+      data: { documentId: updated.id, title: updated.title, appended: args.content },
+    };
+  },
+
+  /**
    * 终止信号：模型完成所有检索后调用此工具给出最终答案。
    * agent 循环只有在此工具被调用时才结束（而非模型自行 stop）。
    */
@@ -388,6 +416,21 @@ export const TOOL_DEFS: ToolDef[] = [
         type: "object",
         properties: { note_id: { type: "string", description: "要删除的笔记ID" } },
         required: ["note_id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "append_note",
+      description: "向现有笔记追加内容（不覆盖原文）。把对话中产生的新信息累积到已有笔记时使用，避免读取全文再重传。追加后会自动重新摄入知识库使其可被检索。",
+      parameters: {
+        type: "object",
+        properties: {
+          note_id: { type: "string", description: "要追加内容的笔记ID" },
+          content: { type: "string", description: "要追加的新内容（Markdown）" },
+        },
+        required: ["note_id", "content"],
       },
     },
   },
