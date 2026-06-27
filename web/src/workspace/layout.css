@@ -264,3 +264,24 @@
 }
 .ws-chat .chat-empty .hint { font-size: 13px; }
 
+/* ReferenceNotePicker — 空态参考笔记单选 */
+.ws-ref-picker { padding: 8px 4px 16px; max-width: 320px; width: 100%; }
+.ws-ref-picker-title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 12px; }
+.ws-ref-picker-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.ws-ref-picker-row {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 10px 12px; border-radius: 10px; text-align: left;
+  font-size: 14px; color: var(--ink-secondary);
+  border: 1px solid transparent; transition: background 0.15s, border-color 0.15s;
+}
+.ws-ref-picker-row:hover { background: var(--bg-hover); color: var(--ink); }
+.ws-ref-picker-row.active {
+  background: rgba(242, 140, 46, 0.1);
+  border-color: rgba(180, 83, 9, 0.25);
+  color: var(--ink);
+}
+.ws-ref-picker-dot { width: 14px; flex-shrink: 0; color: var(--accent-amber); font-size: 12px; }
+.ws-ref-picker-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-ref-picker-hint { font-size: 12px; margin-top: 12px; line-height: 1.5; }
+.ws-ref-picker-empty { text-align: center; padding: 24px 12px; }
+
