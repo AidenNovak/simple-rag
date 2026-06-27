@@ -16,7 +16,6 @@ export function WorkspaceShell({ user, onOpenSettings }: Props) {
         chatModel={user.chatModel}
         topbar={
           <>
-            <span className="ws-title">私人知识库</span>
             <span style={{ marginLeft: "auto" }} />
             <ThemeToggle />
             <span className="muted" style={{ fontSize: 13 }}>{user.email}</span>

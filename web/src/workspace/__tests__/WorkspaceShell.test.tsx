@@ -24,6 +24,16 @@ describe("WorkspaceShell", () => {
     expect(screen.getByTestId("file-tree-inner")).toBeInTheDocument();
     expect(screen.getByTestId("editor-pane-inner")).toBeInTheDocument();
     expect(screen.getByTestId("chat-pane-inner")).toBeInTheDocument();
-    expect(screen.getByRole("banner")).toHaveTextContent("私人知识库");
+    expect(screen.getByRole("banner")).toBeInTheDocument();
+  });
+
+  it("SV4: topbar has no brand title (meimaobing lives in sidebar only)", () => {
+    render(
+      <WorkspaceProvider>
+        <WorkspaceShell user={{ email: "a@b.c" }} onOpenSettings={() => {}} />
+      </WorkspaceProvider>
+    );
+    expect(screen.queryByText("私人知识库")).toBeNull();
+    expect(screen.queryByText("meimaobing")).toBeNull();
   });
 });
