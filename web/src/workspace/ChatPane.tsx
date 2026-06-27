@@ -49,7 +49,9 @@ const TOOL_LABEL: Record<string, string> = {
   search_knowledge_base: "检索知识库", keyword_search: "关键词检索",
   list_documents: "列出文档", get_document_status: "查询状态",
   create_note: "创建笔记", list_notes: "列出笔记", get_note: "查看笔记",
-  update_note: "修改笔记", delete_note: "删除笔记",
+  update_note: "修改笔记", delete_note: "删除笔记", append_note: "追加笔记",
+  set_note_tags: "🏷 设置标签", search_notes_by_tag: "🏷 按标签查",
+  save_conversation_as_note: "💾 沉淀对话", search_conversations: "💬 检索对话",
   get_time: "🕐 获取时间", web_search: "🌐 网络搜索", web_scrape: "🌐 网页抓取",
 };
 

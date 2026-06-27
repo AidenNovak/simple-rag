@@ -43,17 +43,18 @@ export async function chatRoutes(app: FastifyInstance) {
     if (body.question.length > config.tuning.questionMaxLen) throw new ValidationError(`问题过长（上限 ${config.tuning.questionMaxLen} 字符）`);
 
     const creds = { chatApiKeyEnc: (user as any).chatApiKeyEnc || user.newapiKeyEnc, chatModel: user.chatModel, chatBaseUrl: (user as any).chatBaseUrl };
-    // 加载会话文档范围
-    const scopeDocIds = body.conversationId
-      ? (await convoService.getOrCreateConversation(user.id, body.conversationId, body.question)).scopeDocIds
+    // 提前解析会话（复用 scopeDocIds + convId，避免重复调用）
+    const convo = body.conversationId
+      ? await convoService.getOrCreateConversation(user.id, body.conversationId, body.question)
       : null;
+    const scopeDocIds = convo?.scopeDocIds ?? null;
     const history = await convoService.loadHistory(user.id, body.conversationId);
     const contextNotes = await loadContextNotes(user.id, body.contextDocIds);
     const selection = normalizeSelection(body.selection);
-    const result = await agentAnswer(user.id, body.question, creds, history, scopeDocIds, body.webSearch === true, contextNotes, selection);
+    const result = await agentAnswer(user.id, body.question, creds, history, scopeDocIds, body.webSearch === true, contextNotes, selection, convo?.id);
 
     // 落库（业务逻辑在 service 层）
-    const { id: convId, isNew } = await convoService.getOrCreateConversation(user.id, body.conversationId, body.question);
+    const { id: convId, isNew } = convo ?? await convoService.getOrCreateConversation(user.id, body.conversationId, body.question);
     const { messageId } = await convoService.appendTurn(convId, user.id, {
       question: body.question,
       answer: result.answer,
@@ -111,11 +112,12 @@ export async function chatRoutes(app: FastifyInstance) {
     }, 15_000);
 
     try {
-      const scopeDocIds = body.conversationId
-        ? (await convoService.getOrCreateConversation(user.id, body.conversationId, body.question)).scopeDocIds
+      const convo = body.conversationId
+        ? await convoService.getOrCreateConversation(user.id, body.conversationId, body.question)
         : null;
+      const scopeDocIds = convo?.scopeDocIds ?? null;
       const history = await convoService.loadHistory(user.id, body.conversationId);
-      const gen = agentAnswerStream(user.id, body.question, creds, history, scopeDocIds, body.webSearch === true, contextNotes, selection);
+      const gen = agentAnswerStream(user.id, body.question, creds, history, scopeDocIds, body.webSearch === true, contextNotes, selection, convo?.id);
       let fullAnswer = "";
       let finalCitations: any[] = [];
       let finalToolCalls: any[] = [];

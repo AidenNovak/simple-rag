@@ -28,6 +28,14 @@ async function redis() {
   }
 }
 
+/** 关闭 Redis 连接（仅供测试 teardown 让进程能退出，生产无需调用）。 */
+export async function closeRedis(): Promise<void> {
+  if (_redis) {
+    await _redis.quit().catch(() => {});
+    _redis = null;
+  }
+}
+
 export interface IngestJob {
   jobId: string;
   documentId: string;

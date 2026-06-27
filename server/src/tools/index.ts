@@ -38,6 +38,8 @@ export interface ToolContext {
   creds: UserChatCreds;
   /** 会话级文档范围。null = 全部文档。 */
   docIds?: string[] | null;
+  /** 当前对话 ID（save_conversation_as_note 用，可选）。 */
+  conversationId?: string | null;
 }
 
 // ---- 工具实现 ----
@@ -190,11 +192,193 @@ const tools = {
   },
 
   /**
+   * 追加内容到现有笔记末尾（不覆盖原文）。
+   * 用于把对话中的有价值信息累积到「日记/思路本/主题笔记」中。
+   * 比 get_note + update_note 的组合更轻：无需读取全文、不会意外覆盖。
+   */
+  append_note: async (args: { note_id: string; content: string }, ctx: ToolContext): Promise<ToolResult> => {
+    const db = getDb();
+    // 先读原笔记（强制 userId 隔离 + kind=note）
+    const [row] = await db.select().from(schema.documents)
+      .where(and(eq(schema.documents.id, args.note_id), eq(schema.documents.userId, ctx.userId), eq(schema.documents.kind, "note"))).limit(1);
+    if (!row) return { name: "append_note", content: "（未找到该笔记）" };
+    const old = row.contentMd || "";
+    // 追加：用分隔符衔接，避免上下文粘连
+    const sep = old ? "\n\n---\n\n" : "";
+    const merged = `${old}${sep}${args.content}`;
+    const [updated] = await db.update(schema.documents)
+      .set({ contentMd: merged, status: "pending" })
+      .where(and(eq(schema.documents.id, args.note_id), eq(schema.documents.userId, ctx.userId))).returning();
+    // 重新摄入让新内容可检索
+    const { enqueueIngest } = await import("../jobs/queue.js");
+    await enqueueIngest({ documentId: updated.id, userId: ctx.userId });
+    return {
+      name: "append_note",
+      content: `已向笔记《${updated.title}》追加内容并重新摄入知识库。`,
+      data: { documentId: updated.id, title: updated.title, appended: args.content },
+    };
+  },
+
+  /**
    * 终止信号：模型完成所有检索后调用此工具给出最终答案。
    * agent 循环只有在此工具被调用时才结束（而非模型自行 stop）。
    */
   finish: async (args: { answer: string }, _ctx: ToolContext): Promise<ToolResult> => {
     return { name: "finish", content: args.answer, data: { finished: true, answer: args.answer } };
+  },
+
+  /**
+   * 检索用户的历史对话（按关键词模糊匹配 messages.content）。
+   * 多租户隔离：只搜该 user_id 的消息。用于"我之前问过/聊过 X"这类场景。
+   * 返回命中的对话片段（角色 + 内容预览 + 时间 + 会话ID）。
+   */
+  search_conversations: async (args: { query: string; top_k?: number }, ctx: ToolContext): Promise<ToolResult> => {
+    const client = await getPoolClient();
+    try {
+      const res = await client.query(
+        `SELECT m.id, m.conversation_id, m.role, m.content, m.created_at,
+                c.title AS convo_title,
+                similarity(m.content, $2) AS sim
+         FROM messages m
+         LEFT JOIN conversations c ON c.id = m.conversation_id
+         WHERE m.user_id = $1 AND m.content % $2
+         ORDER BY sim DESC, m.created_at DESC
+         LIMIT $3`,
+        [ctx.userId, args.query, Math.min(args.top_k ?? 6, 15)]
+      );
+      const content = res.rows.length
+        ? res.rows.map((r: any, i: number) => {
+            const when = new Date(r.created_at).toLocaleString("zh-CN", { dateStyle: "short", timeStyle: "short" });
+            const role = r.role === "user" ? "用户" : r.role === "assistant" ? "助手" : r.role;
+            const preview = (r.content || "").slice(0, 300);
+            return `【${i + 1}】[${when}] ${role}${r.convo_title ? ` @《${r.convo_title}》` : ""}\n${preview}`;
+          }).join("\n\n---\n\n")
+        : "（未在历史对话中找到相关内容）";
+      return {
+        name: "search_conversations",
+        content,
+        data: { count: res.rows.length, matches: res.rows.map((r: any) => ({ conversationId: r.conversation_id, role: r.role, when: r.created_at })) },
+      };
+    } finally {
+      client.release();
+    }
+  },
+
+  /**
+   * 把当前/指定对话沉淀为一条笔记（带引用回链与时间）。
+   * 读对话消息 → 结构化为 Markdown 笔记 → create_note 入库。
+   * agent 判断对话有价值时主动调用，或在用户要求"存下这段对话"时调用。
+   * title 由 agent 提供（如不提供则用对话标题）。
+   */
+  save_conversation_as_note: async (args: { conversation_id?: string; title?: string; summary?: string }, ctx: ToolContext): Promise<ToolResult> => {
+    const convoId = args.conversation_id || ctx.conversationId;
+    if (!convoId) return { name: "save_conversation_as_note", content: "（无法确定要保存的对话，缺少 conversation_id）" };
+    const client = await getPoolClient();
+    let title: string;
+    let body: string;
+    try {
+      // 读对话标题 + 消息（强制 userId 隔离）
+      const cRes = await client.query(
+        "SELECT title FROM conversations WHERE id = $1 AND user_id = $2",
+        [convoId, ctx.userId]
+      );
+      if (cRes.rows.length === 0) return { name: "save_conversation_as_note", content: "（未找到该对话）" };
+      title = args.title || cRes.rows[0].title || "对话笔记";
+      const mRes = await client.query(
+        "SELECT role, content, created_at FROM messages WHERE conversation_id = $1 AND user_id = $2 ORDER BY created_at ASC",
+        [convoId, ctx.userId]
+      );
+      if (mRes.rows.length === 0) return { name: "save_conversation_as_note", content: "（该对话还没有内容）" };
+      // 组装结构化笔记
+      const when = new Date(mRes.rows[0].created_at).toLocaleString("zh-CN", { dateStyle: "short", timeStyle: "short" });
+      const transcript = mRes.rows.map((m: any) => {
+        const role = m.role === "user" ? "🙋 用户" : m.role === "assistant" ? "🤖 助手" : m.role;
+        return `**${role}**\n\n${m.content}`;
+      }).join("\n\n---\n\n");
+      const summaryBlock = args.summary ? `> ${args.summary}\n\n` : "";
+      body = `${summaryBlock}_对话时间：${when}_\n\n${transcript}`;
+    } finally {
+      client.release();
+    }
+    // 复用 create_note 入库逻辑
+    return tools.create_note({ title, content: body }, ctx);
+  },
+
+  /**
+   * 给笔记设置标签（多对多）。tags 为空则清空该笔记的所有标签。
+   * 不存在的标签自动创建（按 user_id 隔离）。用于笔记组织与按标签检索。
+   */
+  set_note_tags: async (args: { note_id: string; tags: string[] }, ctx: ToolContext): Promise<ToolResult> => {
+    const db = getDb();
+    // 确认笔记归属（强制隔离 + kind=note）
+    const [note] = await db.select({ id: schema.documents.id, title: schema.documents.title }).from(schema.documents)
+      .where(and(eq(schema.documents.id, args.note_id), eq(schema.documents.userId, ctx.userId), eq(schema.documents.kind, "note"))).limit(1);
+    if (!note) return { name: "set_note_tags", content: "（未找到该笔记）" };
+
+    // 清空旧关联
+    await db.delete(schema.noteTags).where(eq(schema.noteTags.noteId, args.note_id));
+
+    const names = (args.tags || []).map((t) => t.trim()).filter(Boolean);
+    const applied: string[] = [];
+    for (const name of names) {
+      // upsert 标签（按 user_id + name 唯一）
+      const [tag] = await db.insert(schema.tags)
+        .values({ userId: ctx.userId, name })
+        .onConflictDoNothing({ target: [schema.tags.userId, schema.tags.name] })
+        .returning();
+      let tagId = tag?.id;
+      if (!tagId) {
+        const [existing] = await db.select().from(schema.tags)
+          .where(and(eq(schema.tags.userId, ctx.userId), eq(schema.tags.name, name))).limit(1);
+        tagId = existing?.id;
+      }
+      if (tagId) {
+        await db.insert(schema.noteTags).values({ noteId: args.note_id, tagId }).onConflictDoNothing();
+        applied.push(name);
+      }
+    }
+    return {
+      name: "set_note_tags",
+      content: applied.length ? `已为笔记《${note.title}》设置标签：${applied.join("、")}` : `已清空笔记《${note.title}》的标签`,
+      data: { noteId: args.note_id, tags: applied },
+    };
+  },
+
+  /**
+   * 按标签筛选笔记（多租户隔离）。
+   * tags 为 OR 关系：命中任一标签的笔记都返回。空则返回该用户所有标签列表。
+   */
+  search_notes_by_tag: async (args: { tags?: string[] }, ctx: ToolContext): Promise<ToolResult> => {
+    const db = getDb();
+    const names = (args.tags || []).map((t) => t.trim()).filter(Boolean);
+    if (names.length === 0) {
+      // 列出该用户所有标签
+      const all = await db.select({ name: schema.tags.name }).from(schema.tags).where(eq(schema.tags.userId, ctx.userId));
+      return {
+        name: "search_notes_by_tag",
+        content: all.length ? `你的标签：${all.map((t) => t.name).join("、")}` : "（还没有任何标签）",
+        data: { tags: all.map((t) => t.name) },
+      };
+    }
+    // 按标签 OR 检索笔记
+    const client = await getPoolClient();
+    try {
+      const res = await client.query(
+        `SELECT DISTINCT ON (d.id) d.id, d.title, d.status, d.updated_at
+         FROM documents d
+         JOIN note_tags nt ON nt.note_id = d.id
+         JOIN tags t ON t.id = nt.tag_id
+         WHERE d.user_id = $1 AND d.kind = 'note' AND t.name = ANY($2::text[])
+         ORDER BY d.id, d.updated_at DESC`,
+        [ctx.userId, names]
+      );
+      const content = res.rows.length
+        ? res.rows.map((r: any, i: number) => `${i + 1}. 《${r.title}》[${r.status}] (ID: ${r.id})`).join("\n")
+        : `（没有匹配标签 ${names.join("、")} 的笔记）`;
+      return { name: "search_notes_by_tag", content, data: { count: res.rows.length, tags: names } };
+    } finally {
+      client.release();
+    }
   },
 
   /**
@@ -394,6 +578,21 @@ export const TOOL_DEFS: ToolDef[] = [
   {
     type: "function",
     function: {
+      name: "append_note",
+      description: "向现有笔记追加内容（不覆盖原文）。把对话中产生的新信息累积到已有笔记时使用，避免读取全文再重传。追加后会自动重新摄入知识库使其可被检索。",
+      parameters: {
+        type: "object",
+        properties: {
+          note_id: { type: "string", description: "要追加内容的笔记ID" },
+          content: { type: "string", description: "要追加的新内容（Markdown）" },
+        },
+        required: ["note_id", "content"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "finish",
       description: "完成所有检索后，调用此工具给出最终答案。在调用此工具之前，确保你已经充分检索了知识库。一旦调用此工具，对话轮次结束。",
       parameters: {
@@ -402,6 +601,64 @@ export const TOOL_DEFS: ToolDef[] = [
           answer: { type: "string", description: "给用户的最终回答（支持 Markdown，可用 [n] 标注引用）" },
         },
         required: ["answer"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_conversations",
+      description: "检索用户的历史对话（按关键词模糊匹配）。当用户问「我之前问过/聊过 X」「上次提到的那个」时使用。多租户隔离，只搜该用户自己的对话。",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "要查找的关键词或描述" },
+          top_k: { type: "integer", description: "返回数量，默认 6", minimum: 1, maximum: 15 },
+        },
+        required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "save_conversation_as_note",
+      description: "把当前对话（或指定对话）沉淀为一条笔记，保留完整问答记录、时间与引用。当你判断这段对话对未来有复用价值（如深入的方案讨论、重要决策、网络调研结果）时主动调用；用户说\"存下这段对话/对话存成笔记\"时也用此工具。",
+      parameters: {
+        type: "object",
+        properties: {
+          conversation_id: { type: "string", description: "要保存的对话ID，省略则保存当前对话" },
+          title: { type: "string", description: "笔记标题（可选，省略用对话原标题）" },
+          summary: { type: "string", description: "一句话摘要，置于笔记开头（可选）" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "set_note_tags",
+      description: "给笔记设置标签（多对多，用于分类与检索）。不存在的标签会自动创建。tags 传空数组则清空该笔记所有标签。建议在 create_note/save_conversation_as_note 之后给新笔记打标签。",
+      parameters: {
+        type: "object",
+        properties: {
+          note_id: { type: "string", description: "笔记ID" },
+          tags: { type: "array", items: { type: "string" }, description: "标签名列表（如 [\"工作\",\"RAG\"]）" },
+        },
+        required: ["note_id", "tags"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_notes_by_tag",
+      description: "按标签筛选笔记（多标签为 OR 关系）。tags 省略则列出该用户的所有标签。用于「找我的 #工作 笔记」「我有哪些标签」这类需求。",
+      parameters: {
+        type: "object",
+        properties: {
+          tags: { type: "array", items: { type: "string" }, description: "要筛选的标签名列表（省略则列出所有标签）" },
+        },
       },
     },
   },

@@ -43,14 +43,32 @@ const SYSTEM_PROMPT = `你是一个私人知识库助手。你拥有以下工具
 不要直接输出文字作为回答——只有通过 finish 工具的 answer 参数给出的内容才会被用户看到。
 注意：工具调用次数上限为 10 次，请合理规划，不要浪费在重复检索同一内容上。
 
+## 主动沉淀（核心规则）
+对话中产生有价值信息时，**主动**写入笔记，不必等用户明确要求"记一下"。判断标准——满足以下任一条件即应沉淀：
+- 用户分享了**经验、决策、待办、计划**（如"我打算用 RRF 重排"、"下次要复盘这点"）。
+- 通过 web_search/web_scrape 获取了**值得留存的资料**（非即用即弃的查询）。
+- 你做了**深入分析或总结**，对用户未来有复用价值（不是闲聊或简单答疑）。
+- 用户明确说"这个重要/记下/以后用/保存"等，**必记**。
+
+**反之，不要沉淀**：闲聊、寒暄、简单事实查询（"今天几号"、"这个词什么意思"）、已存在的重复内容。
+
+沉淀方式（二选一，在调用 finish **之前**完成）：
+- **新建笔记**：内容是独立主题 → create_note（标题简明，正文用 Markdown 组织）。
+- **追加到现有**：内容属于已存在的主题/日记/累积型笔记 → 先 list_notes 看有无合适的，有则 append_note（不覆盖原文），无合适则 create_note。
+- **整段对话有价值**：一次深入的方案讨论/重要决策/网络调研 → save_conversation_as_note，保留完整问答与时间，便于日后回溯。
+- **打标签**：创建或沉淀笔记后，主动用 set_note_tags 给笔记打 1-3 个标签（如主题、来源类型），便于按标签检索（search_notes_by_tag）。不要打过多标签。
+
+沉淀后，在 finish 的回答末尾用一句话告知用户："已将上述内容记入笔记《xxx》"，让用户知道发生了沉淀。
+
 ## 回答规则
 1. 如果问题涉及时间敏感性（最新事件、实时数据、日期计算），先调用 get_time 获取当前时间。
 2. 用户的问题如果涉及知识库内容，必须先调用 search_knowledge_base 工具检索。
 3. 对于复杂或多方面的问题，分多次检索不同方面的内容（例如：先检索"原理"，再检索"数据"，再检索"结论"）。
 4. 回答时在句末用 [n] 角标标注来源。
 5. 如果检索结果不足，诚实说明"知识库中未找到相关内容"。
-6. 用户让你"记录/记下/备忘"某内容时，调用 create_note 工具。
+6. 用户让你"记录/记下/备忘"某内容时，调用 create_note 工具；对话产生有价值信息时按「主动沉淀」规则主动写入。
 7. 用户问文档状态/列表时，调用对应工具。
+7.5. 用户问"我之前问过/聊过/提到过 X"时，调用 search_conversations 检索历史对话。
 8. **网络搜索**：当知识库中没有相关内容，或用户问最新事件、实时数据、新闻时，调用 web_search 搜索互联网。搜索结果也可以作为引用来源。如果搜索结果中有需要深入了解的页面，用 web_scrape 抓取完整内容。
 9. 用中文回答，条理清晰；公式用 LaTeX，代码用代码块。
 10. 不要复述工具返回的原文，理解后组织语言。`;
@@ -176,13 +194,14 @@ export async function agentAnswer(
   docIds?: string[] | null,
   enableWebSearch?: boolean,
   contextNotes?: ContextNote[],
-  selection?: string
+  selection?: string,
+  conversationId?: string | null
 ): Promise<AgentResult> {
   const { apiKey } = resolveChatApiKey(creds);
   if (!apiKey) throw new Error("[agent] no API key resolved (set CHAT_API_KEY or bind user key)");
   const model = resolveChatModel(creds);
   const baseUrl = resolveChatBaseUrl(creds); const client = makeChatClient(apiKey, baseUrl);
-  const ctx: ToolContext = { userId, creds, docIds };
+  const ctx: ToolContext = { userId, creds, docIds, conversationId };
   const toolDefs = getToolDefs({ webSearch: enableWebSearch });
 
   // 用 token 预算构建上下文（替代旧的 history.slice(-6)）
@@ -512,13 +531,14 @@ export async function* agentAnswerStream(
   docIds?: string[] | null,
   enableWebSearch?: boolean,
   contextNotes?: ContextNote[],
-  selection?: string
+  selection?: string,
+  conversationId?: string | null
 ): AsyncGenerator<StreamEvent, void, unknown> {
   const { apiKey } = resolveChatApiKey(creds);
   if (!apiKey) { yield { type: "error", message: "no API key resolved" }; return; }
   const model = resolveChatModel(creds);
   const baseUrl = resolveChatBaseUrl(creds); const client = makeChatClient(apiKey, baseUrl);
-  const ctx: ToolContext = { userId, creds, docIds };
+  const ctx: ToolContext = { userId, creds, docIds, conversationId };
   const toolDefs = getToolDefs({ webSearch: enableWebSearch });
 
   // 用 token 预算构建上下文（替代旧的 history.slice(-6)）
