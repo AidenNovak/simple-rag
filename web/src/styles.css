@@ -165,7 +165,7 @@ input, textarea { font-family: inherit; font-size: inherit; color: inherit; back
   white-space: pre-wrap;
   color: var(--ink);
 }
-.msg.assistant .bubble { white-space: pre-wrap; line-height: 1.75; color: var(--ink); }
+.msg.assistant .bubble { white-space: pre-wrap; line-height: 1.75; color: var(--ink); background: rgba(255,252,247,0.7); padding: 12px 16px; border-radius: var(--radius); border: 1px solid var(--border); }
 .msg.assistant .bubble p { margin-bottom: 12px; }
 .typing-cursor::after {
   content: "▍"; animation: blink 1s steps(2) infinite; color: var(--text-secondary);
