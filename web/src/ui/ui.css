@@ -1,0 +1,17 @@
+/* web/src/ui/ui.css — Badge / Button / Dropdown / Dialog / cmdk 纸面样式（CSS var，无 Tailwind） */
+
+/* ===== Badge ===== */
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--text-caption-size);
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.ui-badge--pending { color: var(--status-pending); background: var(--status-pending-bg); }
+.ui-badge--ready { color: var(--status-ready); background: var(--status-ready-bg); }
+.ui-badge--failed { color: var(--status-failed); background: var(--status-failed-bg); }
+.ui-badge--neutral { color: var(--text-muted); background: var(--bg-hover); }
