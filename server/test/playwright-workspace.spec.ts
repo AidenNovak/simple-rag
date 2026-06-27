@@ -72,24 +72,27 @@ test.describe("kb workspace acceptance", () => {
     await expect(page.locator(".nav-item")).toHaveCount(0);
   });
 
-  test("B1+B2: create note, edit, persist after reload", async ({ page }) => {
+  test("B1+B2: create note, edit via SourcePeek, persist after reload", async ({ page }) => {
     await desktop(page);
     const stamp = `e2e-${Date.now()}`;
     await page.getByRole("button", { name: /新建笔记/ }).first().click();
     await expect(page.getByPlaceholder("笔记标题")).toBeVisible({ timeout: 10000 });
     await page.getByPlaceholder("笔记标题").fill(`E2E ${stamp}`);
-    const body = page.locator('textarea[aria-label="正文"]');
+    // Live Craft：双击 CraftBody 打开 SourcePeek，在其中编辑
+    await page.getByTestId("craft-body").dblclick();
+    const body = page.locator('textarea[aria-label="Markdown 源码"]');
+    await expect(body).toBeVisible({ timeout: 10000 });
     await body.fill(`unique-e2e-content-${stamp}`);
-    await Promise.all([
-      page.waitForResponse((r) => r.url().includes("/api/documents/") && r.request().method() === "PATCH", { timeout: 15000 }),
-      page.getByRole("button", { name: "保存" }).click(),
-    ]);
-    await page.waitForTimeout(2000);
+    // 等 800ms debounce autosave 的 PATCH
+    await page.waitForResponse((r) => r.url().includes("/api/documents/") && r.request().method() === "PATCH", { timeout: 15000 });
+    await page.waitForTimeout(1500);
     await page.reload();
     const row = page.locator('[data-testid="tree-row"]', { hasText: `E2E ${stamp}` }).first();
     await expect(row).toBeVisible({ timeout: 15000 });
     await row.click();
-    await expect(body).toHaveValue(new RegExp(stamp));
+    // 重新打开 SourcePeek 验证正文持久
+    await page.getByTestId("craft-body").dblclick();
+    await expect(page.locator('textarea[aria-label="Markdown 源码"]')).toHaveValue(new RegExp(stamp));
   });
 
   test("V3: saved note is searchable via /api/search within ≤90s", async ({ page }) => {
@@ -129,13 +132,13 @@ test.describe("kb workspace acceptance", () => {
       ].join("");
       await route.fulfill({ status: 200, contentType: "text/event-stream", body: sse });
     });
-    // 发送一条消息触发 stream
-    await page.getByPlaceholder(/发送消息/).fill("改一下");
+    // 发送一条消息触发 stream（composer placeholder 因上下文而变，用 textbox 定位）
+    await page.locator(".ws-composer-stack textarea").fill("改一下");
     await page.locator(".send-btn").last().click();
     // patch-bar 应出现
     await expect(page.getByTestId("patch-bar")).toBeVisible({ timeout: 10000 });
-    // 点「采纳」→ 编辑器内容更新为 after
+    // 点「采纳」→ Craft 重渲染，内容含 after
     await page.getByRole("button", { name: "采纳" }).click();
-    await expect(page.locator('textarea[aria-label="正文"]')).toHaveValue(/要点一/);
+    await expect(page.getByTestId("craft-body")).toContainText(/要点一/);
   });
 });
