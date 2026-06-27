@@ -74,6 +74,8 @@ const TOOL_LABEL: Record<string, string> = {
   update_note: "修改笔记",
   delete_note: "删除笔记",
   append_note: "追加笔记",
+  set_note_tags: "🏷 设置标签",
+  search_notes_by_tag: "🏷 按标签查",
   save_conversation_as_note: "💾 沉淀对话",
   search_conversations: "💬 检索对话",
   get_time: "🕐 获取时间",

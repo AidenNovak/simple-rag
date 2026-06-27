@@ -305,6 +305,83 @@ const tools = {
   },
 
   /**
+   * 给笔记设置标签（多对多）。tags 为空则清空该笔记的所有标签。
+   * 不存在的标签自动创建（按 user_id 隔离）。用于笔记组织与按标签检索。
+   */
+  set_note_tags: async (args: { note_id: string; tags: string[] }, ctx: ToolContext): Promise<ToolResult> => {
+    const db = getDb();
+    // 确认笔记归属（强制隔离 + kind=note）
+    const [note] = await db.select({ id: schema.documents.id, title: schema.documents.title }).from(schema.documents)
+      .where(and(eq(schema.documents.id, args.note_id), eq(schema.documents.userId, ctx.userId), eq(schema.documents.kind, "note"))).limit(1);
+    if (!note) return { name: "set_note_tags", content: "（未找到该笔记）" };
+
+    // 清空旧关联
+    await db.delete(schema.noteTags).where(eq(schema.noteTags.noteId, args.note_id));
+
+    const names = (args.tags || []).map((t) => t.trim()).filter(Boolean);
+    const applied: string[] = [];
+    for (const name of names) {
+      // upsert 标签（按 user_id + name 唯一）
+      const [tag] = await db.insert(schema.tags)
+        .values({ userId: ctx.userId, name })
+        .onConflictDoNothing({ target: [schema.tags.userId, schema.tags.name] })
+        .returning();
+      let tagId = tag?.id;
+      if (!tagId) {
+        const [existing] = await db.select().from(schema.tags)
+          .where(and(eq(schema.tags.userId, ctx.userId), eq(schema.tags.name, name))).limit(1);
+        tagId = existing?.id;
+      }
+      if (tagId) {
+        await db.insert(schema.noteTags).values({ noteId: args.note_id, tagId }).onConflictDoNothing();
+        applied.push(name);
+      }
+    }
+    return {
+      name: "set_note_tags",
+      content: applied.length ? `已为笔记《${note.title}》设置标签：${applied.join("、")}` : `已清空笔记《${note.title}》的标签`,
+      data: { noteId: args.note_id, tags: applied },
+    };
+  },
+
+  /**
+   * 按标签筛选笔记（多租户隔离）。
+   * tags 为 OR 关系：命中任一标签的笔记都返回。空则返回该用户所有标签列表。
+   */
+  search_notes_by_tag: async (args: { tags?: string[] }, ctx: ToolContext): Promise<ToolResult> => {
+    const db = getDb();
+    const names = (args.tags || []).map((t) => t.trim()).filter(Boolean);
+    if (names.length === 0) {
+      // 列出该用户所有标签
+      const all = await db.select({ name: schema.tags.name }).from(schema.tags).where(eq(schema.tags.userId, ctx.userId));
+      return {
+        name: "search_notes_by_tag",
+        content: all.length ? `你的标签：${all.map((t) => t.name).join("、")}` : "（还没有任何标签）",
+        data: { tags: all.map((t) => t.name) },
+      };
+    }
+    // 按标签 OR 检索笔记
+    const client = await getPoolClient();
+    try {
+      const res = await client.query(
+        `SELECT DISTINCT ON (d.id) d.id, d.title, d.status, d.updated_at
+         FROM documents d
+         JOIN note_tags nt ON nt.note_id = d.id
+         JOIN tags t ON t.id = nt.tag_id
+         WHERE d.user_id = $1 AND d.kind = 'note' AND t.name = ANY($2::text[])
+         ORDER BY d.id, d.updated_at DESC`,
+        [ctx.userId, names]
+      );
+      const content = res.rows.length
+        ? res.rows.map((r: any, i: number) => `${i + 1}. 《${r.title}》[${r.status}] (ID: ${r.id})`).join("\n")
+        : `（没有匹配标签 ${names.join("、")} 的笔记）`;
+      return { name: "search_notes_by_tag", content, data: { count: res.rows.length, tags: names } };
+    } finally {
+      client.release();
+    }
+  },
+
+  /**
    * 获取当前时间：让模型知道实时日期时间。
    */
   get_time: async (_args: {}, _ctx: ToolContext): Promise<ToolResult> => {
@@ -553,6 +630,34 @@ export const TOOL_DEFS: ToolDef[] = [
           conversation_id: { type: "string", description: "要保存的对话ID，省略则保存当前对话" },
           title: { type: "string", description: "笔记标题（可选，省略用对话原标题）" },
           summary: { type: "string", description: "一句话摘要，置于笔记开头（可选）" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "set_note_tags",
+      description: "给笔记设置标签（多对多，用于分类与检索）。不存在的标签会自动创建。tags 传空数组则清空该笔记所有标签。建议在 create_note/save_conversation_as_note 之后给新笔记打标签。",
+      parameters: {
+        type: "object",
+        properties: {
+          note_id: { type: "string", description: "笔记ID" },
+          tags: { type: "array", items: { type: "string" }, description: "标签名列表（如 [\"工作\",\"RAG\"]）" },
+        },
+        required: ["note_id", "tags"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_notes_by_tag",
+      description: "按标签筛选笔记（多标签为 OR 关系）。tags 省略则列出该用户的所有标签。用于「找我的 #工作 笔记」「我有哪些标签」这类需求。",
+      parameters: {
+        type: "object",
+        properties: {
+          tags: { type: "array", items: { type: "string" }, description: "要筛选的标签名列表（省略则列出所有标签）" },
         },
       },
     },

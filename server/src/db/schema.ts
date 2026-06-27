@@ -145,6 +145,36 @@ export const mcpTokens = pgTable(
 
 export type McpToken = typeof mcpTokens.$inferSelect;
 
+// ---- 笔记标签（多对多）----
+// tags: 按 user_id 隔离的标签字典；note_tags: 笔记↔标签关联。
+export const tags = pgTable(
+  "tags",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    userUnique: uniqueIndex("tags_user_name_uniq").on(t.userId, t.name),
+    userIdx: index("idx_tags_user").on(t.userId),
+  })
+);
+
+export const noteTags = pgTable(
+  "note_tags",
+  {
+    noteId: uuid("note_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+    tagId: uuid("tag_id").notNull().references(() => tags.id, { onDelete: "cascade" }),
+  },
+  (t) => ({
+    pk: uniqueIndex("note_tags_pk").on(t.noteId, t.tagId),
+    tagIdx: index("idx_note_tags_tag").on(t.tagId),
+  })
+);
+
+export type Tag = typeof tags.$inferSelect;
+
 export type User = typeof users.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type Chunk = typeof chunks.$inferSelect;
