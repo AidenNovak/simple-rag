@@ -46,15 +46,15 @@ export function WorkspaceLayout({ chatModel, topbar }: Props) {
   return (
     <div className="workspace-root" style={style}>
       <header className="workspace-topbar" role="banner">{topbar}</header>
-      <aside className="workspace-left" data-pane="left" data-testid="file-tree-pane">
+      <aside className="workspace-left" data-pane="left">
         <FileTree />
       </aside>
       <div className="workspace-resizer-left" role="separator" aria-orientation="vertical" onMouseDown={startDrag("left")} />
-      <main className="workspace-center" data-pane="center" data-testid="editor-pane">
+      <main className="workspace-center" data-pane="center">
         <EditorPane />
       </main>
       <div className="workspace-resizer-right" role="separator" aria-orientation="vertical" onMouseDown={startDrag("right")} />
-      <aside className="workspace-right" data-pane="right" data-testid="chat-pane">
+      <aside className="workspace-right" data-pane="right">
         <ChatPane chatModel={chatModel} />
       </aside>
     </div>
