@@ -17,13 +17,16 @@ function newEmail() {
 
 async function registerAndLogin(page: Page): Promise<string> {
   const email = newEmail();
+  // 先用空白页清掉上轮测试残留的 kb_token，避免 App 误判已登录卡在「加载中…」
   await page.goto(BASE);
+  await page.evaluate(() => { localStorage.removeItem("kb_token"); sessionStorage.clear(); });
+  await page.reload();
+  await page.getByPlaceholder("you@example.com").waitFor({ state: "visible", timeout: 15000 });
   await page.getByRole("button", { name: "注册", exact: true }).click();
   await page.getByPlaceholder("you@example.com").fill(email);
   await page.getByPlaceholder("••••••••").fill(PASSWORD);
   await page.getByRole("button", { name: "创建账号" }).click();
   await expect(page.getByRole("banner")).toBeVisible({ timeout: 20000 });
-  // token 挂到 page 上供后续 API 调用复用（避免重复登录）
   const token = await page.evaluate(() => localStorage.getItem("kb_token") || "");
   (page as any).__token = token;
   return token;
