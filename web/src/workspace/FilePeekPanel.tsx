@@ -27,7 +27,7 @@ export function FilePeekPanel({ docId, onClose }: { docId: string | null; onClos
   const raw = doc?.contentMd || doc?.meta?.extractedText || "（无文本内容）";
 
   return (
-    <aside className="ws-file-peek" data-testid="file-peek">
+    <aside className="ws-file-peek ws-side-peek-panel" data-testid="file-peek">
       <div className="ws-peek-head">
         <strong>{doc?.title || "文件预览"}</strong>
         <button type="button" className="ws-peek-close" aria-label="关闭" onClick={onClose}><IconClose size={14} /></button>

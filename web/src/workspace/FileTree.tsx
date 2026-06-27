@@ -109,12 +109,12 @@ export function FileTree() {
       <div className="ws-sidebar-brand">meimaobing</div>
 
       <SidebarSection title="笔记" actionLabel="新建笔记" onAction={newNote}>
-        {notes.map((d) => (<li key={d.id}><Row d={d} /></li>))}
+        {notes.map((d, i) => (<li key={d.id} className="kb-animate-in" style={{ animationDelay: `${i * 20}ms` }}><Row d={d} /></li>))}
       </SidebarSection>
 
       <SidebarSection title="对话" actionLabel="新建对话" onAction={newConvo}>
-        {convos.map((c) => (
-          <li key={c.id}>
+        {convos.map((c, i) => (
+          <li key={c.id} className="kb-animate-in" style={{ animationDelay: `${i * 20}ms` }}>
             <div
               className={`ws-tree-row ws-tree-row-convo${state.convoId === c.id ? " active-convo" : ""}`}
               data-testid="tree-row-convo"
@@ -129,7 +129,7 @@ export function FileTree() {
 
       {files.length > 0 && (
         <SidebarSection title="文件" actionLabel="上传文件" onAction={() => fileInput.current?.click()} actionIcon={<IconUpload size={14} />}>
-          {files.map((d) => (<li key={d.id}><Row d={d} /></li>))}
+          {files.map((d, i) => (<li key={d.id} className="kb-animate-in" style={{ animationDelay: `${i * 20}ms` }}><Row d={d} /></li>))}
         </SidebarSection>
       )}
 

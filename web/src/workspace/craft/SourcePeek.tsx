@@ -27,7 +27,7 @@ export function SourcePeek({ open, content, onChange, onClose, onSave }: Props) 
   if (!open) return null;
 
   return (
-    <aside className="ws-source-peek" data-testid="source-peek" aria-label="源码编辑">
+    <aside className="ws-source-peek ws-side-peek-panel" data-testid="source-peek" aria-label="源码编辑">
       <div className="ws-peek-head">
         <span>源码</span>
         <span className="ws-save-pill" data-status={status}>
